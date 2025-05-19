@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
@@ -31,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImagePlus, RefreshCw, Check, Upload, Calendar, Brain } from "lucide-react";
+import { ImagePlus, RefreshCw, Check, Upload, Calendar, Brain, Plus } from "lucide-react";
 import { categories, subcategories, productNature, Category } from "@/lib/schema";
 import { mockApi, GPTSuggestion } from "@/lib/mock-api";
 
@@ -51,6 +50,9 @@ export default function AddProductForm() {
   const [images, setImages] = useState<string[]>(["/placeholder.svg"]);
   const [suggestions, setSuggestions] = useState<Record<string, GPTSuggestion[]>>({});
   const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+  
+  // Define brandingMethods array
+  const brandingMethods = ["UV Print", "Screen", "Embroidery", "Sticker", "Foil", "Laser"];
   
   const handleCategoryChange = (value: string) => {
     const selectedCategory = value as Category;
@@ -552,7 +554,7 @@ export default function AddProductForm() {
                   </div>
                   
                   <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => setActiveTab("core")}>
+                    <Button variant="outline" onClick={() => setActiveTab("ai")}>
                       Back
                     </Button>
                     <Button onClick={() => setActiveTab("logistics")}>

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Image as KonvaImage, Transformer } from "react-konva";
 import { useToast } from "@/hooks/use-toast";
@@ -481,11 +480,11 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                     <KonvaImage
                       key={logo.id}
                       id={logo.id}
-                      image={() => {
+                      image={(() => {
                         const img = new Image();
                         img.src = logo.url;
                         return img;
-                      }}
+                      })()}
                       x={logo.x}
                       y={logo.y}
                       width={logo.width}
