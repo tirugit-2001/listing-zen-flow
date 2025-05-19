@@ -7,7 +7,7 @@ export const schema = {
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "1.3.0"
+      "const": "1.3.1"
     },
     "fixed_fields": {
       "type": "object",
@@ -186,6 +186,23 @@ export const schema = {
           "type": "number",
           "minimum": 0,
           "description": "Sample unit price"
+        },
+        "basePriceWithoutGST": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Base price per unit without GST"
+        },
+        "gstRate": {
+          "type": "number",
+          "enum": [0, 5, 12, 18, 28],
+          "description": "GST rate (%)",
+          "x-api": "fetchGSTRate"
+        },
+        "totalPriceWithGST": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total price including GST",
+          "x-computed": "basePriceWithoutGST * (1 + gstRate/100)"
         }
       }
     },
@@ -275,7 +292,7 @@ export const schema = {
     },
     "certification": {
       "type": "object",
-      "x-conditional": "certificationRequired === 'Yes'",
+      "x-conditional": "certificationRequired === 'Yes' || mandatoryCertification[category]",
       "required": ["certificationRequired"],
       "properties": {
         "certificationRequired": {
@@ -286,7 +303,21 @@ export const schema = {
         "certificateType": {
           "type": "string",
           "enum": ["ISO", "FSSAI", "BIS", "RoHS", "CE", "FDA", "Other"],
-          "description": "Type of certification"
+          "description": "Type of certification",
+          "x-options": {
+            "electronics": ["BIS", "RoHS", "CE"],
+            "edibles": ["FSSAI", "FDA"],
+            "bottles": ["BIS", "FDA"],
+            "apparel": ["ISO"],
+            "diaries": ["ISO"],
+            "hampers": ["FSSAI"],
+            "bags": ["ISO"],
+            "stationery": ["BIS"],
+            "utility": ["BIS"],
+            "desktop": ["BIS"],
+            "packaging": ["ISO"],
+            "digital_products": []
+          }
         },
         "certificateUpload": {
           "type": "string",
@@ -377,6 +408,93 @@ export const schema = {
             }
           }
         },
+        "hampers": {
+          "type": "object",
+          "required": ["contents"],
+          "properties": {
+            "contents": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Items in hamper"
+            }
+          }
+        },
+        "electronics": {
+          "type": "object",
+          "required": ["powerSource"],
+          "properties": {
+            "powerSource": {
+              "type": "string",
+              "enum": ["Battery", "USB", "AC"],
+              "default": "Battery"
+            }
+          }
+        },
+        "bags": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Backpack", "Tote", "Laptop Bag"],
+              "default": "Backpack"
+            }
+          }
+        },
+        "edibles": {
+          "type": "object",
+          "required": ["shelfLife"],
+          "properties": {
+            "shelfLife": {
+              "type": "string",
+              "description": "Shelf life (e.g., 6 months)"
+            }
+          }
+        },
+        "stationery": {
+          "type": "object",
+          "required": ["itemType"],
+          "properties": {
+            "itemType": {
+              "type": "string",
+              "enum": ["Pen", "Notebook", "Organizer"],
+              "default": "Notebook"
+            }
+          }
+        },
+        "utility": {
+          "type": "object",
+          "required": ["function"],
+          "properties": {
+            "function": {
+              "type": "string",
+              "enum": ["Tool", "Kitchenware", "Other"],
+              "default": "Tool"
+            }
+          }
+        },
+        "desktop": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Organizer", "Decor"],
+              "default": "Organizer"
+            }
+          }
+        },
+        "packaging": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Box", "Bag", "Wrap"],
+              "default": "Box"
+            }
+          }
+        },
         "digital_products": {
           "type": "object",
           "required": ["fileFormat"],
@@ -389,6 +507,25 @@ export const schema = {
             "version": {
               "type": "string",
               "description": "Software version"
+            }
+          }
+        }
+      }
+    },
+    "bulk_import_metadata": {
+      "type": "object",
+      "properties": {
+        "fileName": { "type": "string" },
+        "importDate": { "type": "string", "format": "date-time" },
+        "rowCount": { "type": "integer", "minimum": 1 },
+        "validRows": { "type": "integer", "minimum": 0 },
+        "errorRows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rowNumber": { "type": "integer" },
+              "errorMessage": { "type": "string" }
             }
           }
         }
@@ -409,6 +546,71 @@ export const schema = {
     "desktop": "physical",
     "packaging": "physical",
     "digital_products": "digital"
+  },
+  "x-intake_order": [
+    {
+      "step": "Core Identifiers",
+      "fields": ["fixed_fields", "bulk_import_metadata"],
+      "triggers": ["GPT", "Vision API"],
+      "applicable_nature": "hybrid"
+    },
+    {
+      "step": "AI Insights",
+      "fields": ["ai_insights"],
+      "triggers": ["GPT"],
+      "applicable_nature": "hybrid"
+    },
+    {
+      "step": "Logistics and Pricing",
+      "fields": ["logistics_pricing"],
+      "applicable_nature": "physical"
+    },
+    {
+      "step": "Delivery and Licensing",
+      "fields": ["delivery_licensing"],
+      "applicable_nature": "digital"
+    },
+    {
+      "step": "Branding",
+      "fields": ["branding"],
+      "applicable_nature": "physical"
+    },
+    {
+      "step": "Certification",
+      "fields": ["certification"],
+      "applicable_nature": "hybrid"
+    },
+    {
+      "step": "Inserts",
+      "fields": ["inserts"],
+      "applicable_nature": "physical"
+    },
+    {
+      "step": "Category-Specific",
+      "fields": ["category_specific"],
+      "applicable_nature": "hybrid"
+    }
+  ],
+  "x-features": {
+    "reuse_last_listing": true,
+    "csv_upload": true,
+    "auto_image_tagging": true,
+    "branding_preview": true,
+    "gpt_tooltips": true,
+    "auto_category_detection": true,
+    "duplicate_warning": true,
+    "quick_submit": true,
+    "batch_branding": true,
+    "content_scoring": true,
+    "live_visual_preview": true
+  },
+  "x-mandatoryCertification": {
+    "electronics": ["BIS"],
+    "edibles": ["FSSAI"],
+    "bottles": ["BIS"],
+    "stationery": ["BIS"],
+    "utility": ["BIS"],
+    "desktop": ["BIS"]
   }
 };
 
@@ -472,3 +674,14 @@ export const brandingMethods: Record<Category, string[]> = {
   packaging: ["Sticker", "Foil"],
   digital_products: []
 };
+
+export const mandatoryCertification: Record<string, string[]> = {
+  electronics: ["BIS"],
+  edibles: ["FSSAI"],
+  bottles: ["BIS"],
+  stationery: ["BIS"],
+  utility: ["BIS"],
+  desktop: ["BIS"]
+};
+
+export const gstRates = [0, 5, 12, 18, 28];
