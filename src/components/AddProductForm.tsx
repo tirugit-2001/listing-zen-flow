@@ -1,1175 +1,1398 @@
-
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/components/ui/card";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Category, categories, subcategories, brandingMethods, gstRates } from "@/lib/schema";
+import { getFullProductSchema, getInitialValues, getFormSections, ProductFormValues } from "@/lib/product-form-schema";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImagePlus, RefreshCw, Check, Upload, Calendar, Brain, Plus } from "lucide-react";
-import { categories, subcategories, productNature, Category } from "@/lib/schema";
-import { mockApi, GPTSuggestion } from "@/lib/mock-api";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-// Define a simple form schema
-const formSchema = z.object({
-  productName: z.string().min(1, "Product name is required"),
-  category: z.string().min(1, "Category is required"),
-  subcategory: z.string().min(1, "Subcategory is required"),
-  description: z.string().optional(),
-  // Add other fields as needed
-});
+import { Separator } from "@/components/ui/separator";
+import { ImageUploader } from "@/components/product/ImageUploader";
+import { BrandingZoneEditor } from "@/components/product/BrandingZoneEditor";
 
 export default function AddProductForm() {
-  const { toast } = useToast();
+  const [category, setCategory] = useState<Category>("bottles");
   const [activeTab, setActiveTab] = useState("core");
-  const [isLoading, setIsLoading] = useState(false);
-  const [category, setCategory] = useState<Category | "">("");
-  const [subcategory, setSubcategory] = useState("");
-  const [productName, setProductName] = useState("");
-  const [description, setDescription] = useState("");
-  const [features, setFeatures] = useState<string[]>([]);
-  const [newFeature, setNewFeature] = useState("");
-  const [brandingAvailable, setBrandingAvailable] = useState(false);
-  const [certificationRequired, setCertificationRequired] = useState(false);
-  const [isDigital, setIsDigital] = useState(false);
-  const [images, setImages] = useState<string[]>(["/placeholder.svg"]);
-  const [suggestions, setSuggestions] = useState<Record<string, GPTSuggestion[]>>({});
-  const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
-  
-  // Define brandingMethods array
-  const brandingMethods = ["UV Print", "Screen", "Embroidery", "Sticker", "Foil", "Laser"];
-  
-  // Initialize the form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      productName: "",
-      category: "",
-      subcategory: "",
-      description: "",
-    },
+  const [isCrossListed, setIsCrossListed] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [productType, setProductType] = useState<"Physical" | "Digital" | "Combo" | "Hamper">("Physical");
+
+  // Initialize form with schema based on selected category
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(getFullProductSchema(category)),
+    defaultValues: getInitialValues(category),
+    mode: "onChange",
   });
   
-  const handleCategoryChange = (value: string) => {
-    const selectedCategory = value as Category;
-    setCategory(selectedCategory);
-    setSubcategory("");
+  const { watch, setValue, getValues, formState } = form;
+  
+  // Watch key fields for conditional logic
+  const watchBrandingAvailable = watch("brandingAvailable");
+  const watchProductImages = watch("productImages");
+  const watchCategory = watch("category") as Category;
+  const watchPricingModel = watch("pricingModel");
+  const watchInsertCompatible = watch("insertCompatible");
+  const watchCertificationRequired = watch("certificationRequired");
+  
+  // Effect to update subcategory when category changes
+  const onCategoryChange = (newCategory: string) => {
+    setCategory(newCategory as Category);
     
-    // Update the form value
-    form.setValue("category", selectedCategory);
-    form.setValue("subcategory", "");
+    // Reset subcategory
+    if (subcategories[newCategory as Category]) {
+      setValue("subcategory", subcategories[newCategory as Category][0]);
+    }
     
-    // Set product nature based on selected category
-    if (selectedCategory && productNature[selectedCategory] === "digital") {
-      setIsDigital(true);
-    } else {
-      setIsDigital(false);
+    // Reset branding methods based on new category
+    if (brandingMethods[newCategory as Category]) {
+      setValue("brandingMethods", []);
     }
   };
   
-  const handleAddFeature = () => {
-    if (newFeature.trim() === "") return;
+  // Calculate GST amount based on price and rate
+  const calculateTotalWithGST = (basePrice: number, gstRate: number) => {
+    return basePrice * (1 + gstRate / 100);
+  };
+  
+  const onBasePriceChange = (value: number) => {
+    const gstRate = getValues("gstRate");
+    setValue("totalPriceWithGST", calculateTotalWithGST(value, gstRate));
+  };
+  
+  const onGSTRateChange = (value: number) => {
+    const basePrice = getValues("basePriceWithoutGST");
+    setValue("totalPriceWithGST", calculateTotalWithGST(basePrice, value));
+  };
+  
+  // Handle form submission
+  const onSubmit = (data: ProductFormValues) => {
+    // In a real app, you'd send this to an API
+    console.log("Form submitted:", data);
     
-    setFeatures([...features, newFeature]);
-    setNewFeature("");
-  };
-  
-  const handleRemoveFeature = (index: number) => {
-    const newFeatures = [...features];
-    newFeatures.splice(index, 1);
-    setFeatures(newFeatures);
-  };
-  
-  const handleGetSuggestions = async (field: string) => {
-    setIsGettingSuggestions(true);
-    
-    try {
-      let prompt = "";
-      
-      switch (field) {
-        case "productName":
-          prompt = `Suggest a product name for a ${category || "product"} in the ${subcategory || "general"} subcategory`;
-          break;
-        case "description":
-          prompt = `Write a product description for ${productName || `a ${category || "product"}`} in the ${subcategory || "general"} subcategory`;
-          break;
-        case "features":
-          prompt = `List 5 key features for ${productName || `a ${category || "product"}`} in the ${subcategory || "general"} subcategory`;
-          break;
-        default:
-          prompt = `Provide suggestions for ${field} for a ${category || "product"}`;
-      }
-      
-      const suggestionsData = await mockApi.fetchGPTSuggestions(prompt, field);
-      
-      setSuggestions({
-        ...suggestions,
-        [field]: suggestionsData
-      });
-      
-      toast({
-        title: "AI Suggestions Ready",
-        description: `We've generated suggestions for ${field}`,
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to get AI suggestions. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGettingSuggestions(false);
-    }
-  };
-  
-  const handleApplySuggestion = (field: string, suggestion: string) => {
-    switch (field) {
-      case "productName":
-        setProductName(suggestion);
-        form.setValue("productName", suggestion);
-        break;
-      case "description":
-        setDescription(suggestion);
-        form.setValue("description", suggestion);
-        break;
-      case "features":
-        // This would split the suggestion if it's a comma-separated list
-        const featureItems = suggestion.split(',').map(f => f.trim());
-        if (featureItems.length > 1) {
-          setFeatures([...features, ...featureItems]);
-        } else {
-          setFeatures([...features, suggestion]);
-        }
-        break;
-    }
-    
-    toast({
-      title: "Suggestion Applied",
-      description: `The AI suggestion for ${field} has been applied.`,
-    });
-  };
-  
-  const handleDetectCategory = async () => {
-    if (images.length === 0) {
-      toast({
-        title: "No Image Available",
-        description: "Please upload an image first to detect category.",
-        variant: "destructive"
-      });
+    // Validation checks
+    if (data.brandingAvailable === "Yes" && (!data.brandingMethods || data.brandingMethods.length === 0)) {
+      toast.error("Please select at least one branding method");
       return;
     }
     
-    setIsLoading(true);
+    if (watchProductImages.length === 0) {
+      toast.error("Please upload at least one product image");
+      return;
+    }
     
-    try {
-      const result = await mockApi.detectCategory(images[0]);
-      
-      setCategory(result.category as Category);
-      form.setValue("category", result.category);
-      
-      toast({
-        title: "Category Detected",
-        description: `Detected category: ${result.category} (${Math.round(result.confidence * 100)}% confidence)`,
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to detect category. Please select manually.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+    // A/B test insights: MRP + GST + branding logic enforcement
+    if (data.brandingAvailable === "Yes" && data.brandingCost) {
+      const totalCost = data.basePriceWithoutGST + data.brandingCost;
+      if (totalCost > data.totalPriceWithGST) {
+        toast.error("Total cost (base price + branding) exceeds the MRP");
+        return;
+      }
+    }
+    
+    toast.success("Product added successfully!");
+    // Reset form or redirect
+  };
+  
+  // Get sections based on current category and cross-listing status
+  const formSections = getFormSections(category, isCrossListed);
+  
+  // Navigate to the next tab
+  const goToNextTab = () => {
+    const currentSectionIndex = formSections.findIndex(section => section.id === activeTab);
+    if (currentSectionIndex < formSections.length - 1) {
+      setActiveTab(formSections[currentSectionIndex + 1].id);
     }
   };
   
-  const onSubmit = (formData: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    
-    // Combine form data with other state
-    const productData = {
-      ...formData,
-      features,
-      images,
-      brandingAvailable: brandingAvailable ? "Yes" : "No",
-      certificationRequired: certificationRequired ? "Yes" : "No",
-      isDigital
-    };
-    
-    console.log("Form submitted:", productData);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      toast({
-        title: "Product Added",
-        description: "Your product has been added successfully!",
-      });
-      
-      // Reset form or redirect
-    }, 1500);
+  // Navigate to the previous tab
+  const goToPrevTab = () => {
+    const currentSectionIndex = formSections.findIndex(section => section.id === activeTab);
+    if (currentSectionIndex > 0) {
+      setActiveTab(formSections[currentSectionIndex - 1].id);
+    }
   };
-  
-  const renderTabButton = (value: string, label: string, icon?: React.ReactNode) => (
-    <TabsTrigger value={value} className="flex items-center gap-2">
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-    </TabsTrigger>
-  );
-  
+
   return (
-    <div className="container py-8 max-w-5xl">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-6">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Add New Product</h1>
-              <p className="text-muted-foreground">
-                Create a new product listing with AI-assisted suggestions
-              </p>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar navigation */}
+          <div className="lg:w-64">
+            <div className="sticky top-6">
+              <ScrollArea className="h-[calc(100vh-200px)]">
+                <div className="space-y-1">
+                  {formSections.map((section) => (
+                    <Button
+                      key={section.id}
+                      type="button"
+                      variant={activeTab === section.id ? "default" : "ghost"}
+                      className={cn(
+                        "w-full justify-start text-left",
+                        section.disabled && "opacity-50 cursor-not-allowed"
+                      )}
+                      disabled={section.disabled}
+                      onClick={() => setActiveTab(section.id)}
+                    >
+                      {section.title}
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3 md:grid-cols-5">
-                {renderTabButton("core", "Core Details", <span>1</span>)}
-                {renderTabButton("ai", "AI Insights", <Brain className="h-4 w-4" />)}
-                {renderTabButton("logistics", "Logistics", <span>3</span>)}
-                {!isDigital && renderTabButton("branding", "Branding", <span>4</span>)}
-                {renderTabButton("category", "Category", <span>{isDigital ? "4" : "5"}</span>)}
+          </div>
+          
+          {/* Main content */}
+          <div className="flex-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="hidden">
+                {formSections.map((section) => (
+                  <TabsTrigger key={section.id} value={section.id}>
+                    {section.title}
+                  </TabsTrigger>
+                ))}
               </TabsList>
-              
-              <div className="mt-6">
-                <TabsContent value="core">
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold mb-4">Core Product Details</h2>
-                    
-                    <div className="grid gap-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <FormItem>
-                            <FormLabel>Product Images <span className="text-red-500">*</span></FormLabel>
-                            <div className="grid grid-cols-2 gap-4">
-                              {images.map((image, index) => (
-                                <div 
-                                  key={index} 
-                                  className="border rounded-md aspect-square overflow-hidden relative group"
-                                >
-                                  <img 
-                                    src={image} 
-                                    alt={`Product image ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button size="sm" variant="ghost" className="text-white">
-                                      <Upload className="h-4 w-4 mr-2" />
-                                      Replace
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                              
-                              <div className="border border-dashed rounded-md aspect-square flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
-                                <span className="text-sm text-muted-foreground">
-                                  Add Image
-                                </span>
-                              </div>
+
+              {/* Core fields section */}
+              <TabsContent value="core" className="space-y-6 mt-0">
+                <div className="grid gap-6">
+                  {/* Product Type Selection */}
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="space-y-2">
+                        <FormLabel>Product Type</FormLabel>
+                        <RadioGroup
+                          value={productType}
+                          onValueChange={(value) => setProductType(value as typeof productType)}
+                          className="flex flex-wrap gap-4"
+                        >
+                          {["Physical", "Digital", "Combo", "Hamper"].map((type) => (
+                            <div key={type} className="flex items-center space-x-2">
+                              <RadioGroupItem value={type} id={`type-${type}`} />
+                              <FormLabel htmlFor={`type-${type}`} className="font-normal">
+                                {type}
+                              </FormLabel>
                             </div>
-                            <FormDescription>
-                              Upload product images (JPEG/PNG, min 1000x1000px)
-                            </FormDescription>
-                          </FormItem>
-                        </div>
-                        
-                        <div className="space-y-6">
-                          <FormField
-                            control={form.control}
-                            name="productName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Product Name <span className="text-red-500">*</span></FormLabel>
-                                <div className="flex gap-2">
-                                  <FormControl>
-                                    <Input 
-                                      placeholder="Enter product name" 
-                                      {...field}
-                                      value={productName || field.value}
-                                      onChange={(e) => {
-                                        setProductName(e.target.value);
-                                        field.onChange(e);
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <Button 
-                                    variant="outline" 
-                                    size="icon"
-                                    type="button"
-                                    onClick={() => handleGetSuggestions("productName")}
-                                    disabled={isGettingSuggestions}
-                                  >
-                                    {isGettingSuggestions ? (
-                                      <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Brain className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                                {suggestions.productName && (
-                                  <div className="mt-2">
-                                    <p className="text-xs text-muted-foreground mb-1">AI Suggestions:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {suggestions.productName.map((suggestion, index) => (
-                                        <Badge 
-                                          key={index}
-                                          variant="outline"
-                                          className="cursor-pointer hover:bg-primary/10 flex items-center gap-1"
-                                          onClick={() => handleApplySuggestion("productName", suggestion.text)}
-                                        >
-                                          {suggestion.text}
-                                          <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-4 w-4 p-0 ml-1"
-                                            type="button"
-                                          >
-                                            <Check className="h-3 w-3" />
-                                          </Button>
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="category"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
-                                  <div className="flex gap-2">
-                                    <FormControl>
-                                      <Select 
-                                        value={category || field.value} 
-                                        onValueChange={(value) => {
-                                          handleCategoryChange(value);
-                                          field.onChange(value);
-                                        }}
-                                      >
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {categories.map((cat) => (
-                                            <SelectItem key={cat} value={cat}>
-                                              {cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ')}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </FormControl>
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      type="button"
-                                      onClick={handleDetectCategory}
-                                      disabled={isLoading || images.length === 0}
-                                    >
-                                      {isLoading ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Brain className="h-4 w-4" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="subcategory"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Subcategory <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Select 
-                                      value={subcategory || field.value}
-                                      onValueChange={(value) => {
-                                        setSubcategory(value);
-                                        field.onChange(value);
-                                      }}
-                                      disabled={!category}
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select subcategory" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {category && subcategories[category as Category]?.map((sub) => (
-                                          <SelectItem key={sub} value={sub}>
-                                            {sub}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
+                          ))}
+                        </RadioGroup>
                       </div>
-                      
-                      <div className="flex justify-end mt-4">
-                        <Button type="button" onClick={() => setActiveTab("ai")}>
-                          Next: AI Insights
-                        </Button>
-                      </div>
-                    </div>
+                    </CardContent>
                   </Card>
-                </TabsContent>
-                
-                <TabsContent value="ai">
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold mb-4">AI-Enhanced Insights</h2>
-                    
-                    <div className="grid gap-6">
+                  
+                  {/* Cross-listing toggle */}
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <FormLabel>Cross-Listing Mode</FormLabel>
+                          <FormDescription>
+                            Enable if you're listing a product from another vendor
+                          </FormDescription>
+                        </div>
+                        <Switch
+                          checked={isCrossListed}
+                          onCheckedChange={setIsCrossListed}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Basic Details */}
+                  <Card>
+                    <CardContent className="pt-6 grid gap-4">
+                      <FormField
+                        control={form.control}
+                        name="productName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Product Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter product name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Category</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  onCategoryChange(value);
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select category" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {categories.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="subcategory"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Subcategory</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select subcategory" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {subcategories[watchCategory]?.map((subcat) => (
+                                    <SelectItem key={subcat} value={subcat}>
+                                      {subcat}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
                       <FormField
                         control={form.control}
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Product Description</FormLabel>
-                            <div className="flex gap-2">
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Enter product description"
+                                className="min-h-24"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Describe your product in detail. This will be used for SEO and product pages.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Product Images */}
+                  <Card>
+                    <CardContent className="pt-6">
+                      <FormField
+                        control={form.control}
+                        name="productImages"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Product Images</FormLabel>
+                            <FormControl>
+                              <ImageUploader
+                                images={field.value || []}
+                                onChange={field.onChange}
+                                maxImages={5}
+                                minWidth={1000}
+                                minHeight={1000}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Upload studio-quality product images with white background.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Category Details
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Category-specific fields */}
+              <TabsContent value="categorySpecific" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6">
+                    {category === "bottles" && (
+                      <div className="grid gap-4">
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.material"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Material</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select material" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["Stainless Steel", "Plastic", "Glass"].map((material) => (
+                                    <SelectItem key={material} value={material}>
+                                      {material}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.capacity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Capacity (ml)</FormLabel>
                               <FormControl>
-                                <Textarea 
-                                  placeholder="Enter product description" 
-                                  className="resize-none h-32"
+                                <Input
+                                  type="number"
+                                  placeholder="Capacity in ml"
                                   {...field}
-                                  value={description || field.value}
-                                  onChange={(e) => {
-                                    setDescription(e.target.value);
-                                    field.onChange(e);
-                                  }}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
                                 />
                               </FormControl>
-                              <div>
-                                <Button 
-                                  variant="outline" 
-                                  size="icon"
-                                  type="button"
-                                  onClick={() => handleGetSuggestions("description")}
-                                  disabled={isGettingSuggestions}
-                                >
-                                  {isGettingSuggestions ? (
-                                    <RefreshCw className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Brain className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                            {suggestions.description && (
-                              <div className="mt-2">
-                                <p className="text-xs text-muted-foreground mb-1">AI Suggestions:</p>
-                                <ScrollArea className="h-32 border rounded-md p-2">
-                                  {suggestions.description.map((suggestion, index) => (
-                                    <div 
-                                      key={index}
-                                      className="mb-2 p-2 border rounded-md hover:bg-primary/10 cursor-pointer"
-                                      onClick={() => handleApplySuggestion("description", suggestion.text)}
-                                    >
-                                      <div className="flex justify-between items-start">
-                                        <p className="text-sm">{suggestion.text}</p>
-                                        <Button variant="ghost" size="icon" type="button" className="h-6 w-6 p-1 ml-2 flex-shrink-0">
-                                          <Check className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.insulation"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Insulation</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select insulation type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["Single Wall", "Double Wall", "None"].map((type) => (
+                                    <SelectItem key={type} value={type}>
+                                      {type}
+                                    </SelectItem>
                                   ))}
-                                </ScrollArea>
-                              </div>
-                            )}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                    
+                    {category === "apparel" && (
+                      <div className="grid gap-4">
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.material"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Material</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select material" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["Cotton", "Polyester", "Blend"].map((material) => (
+                                    <SelectItem key={material} value={material}>
+                                      {material}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {/* Size checkboxes would be implemented here */}
+                      </div>
+                    )}
+                    
+                    {category === "diaries" && (
+                      <div className="grid gap-4">
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.coverType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cover Type</FormLabel>
+                              <Select
+                                disabled={isCrossListed}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select cover type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["Hardcover", "Softcover", "Leather"].map((type) => (
+                                    <SelectItem key={type} value={type}>
+                                      {type}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="categorySpecific.pageCount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Page Count</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Number of pages"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Other category-specific fields would be added here */}
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Pricing
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Pricing Section */}
+              <TabsContent value="pricing" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="basePriceWithoutGST"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Base Price (without GST)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  field.onChange(value);
+                                  onBasePriceChange(value);
+                                }}
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <FormItem>
-                        <FormLabel>Product Features</FormLabel>
-                        <div className="space-y-2">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Add a product feature"
-                              value={newFeature}
-                              onChange={(e) => setNewFeature(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleAddFeature();
-                                }
+                      <FormField
+                        control={form.control}
+                        name="gstRate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>GST Rate (%)</FormLabel>
+                            <Select
+                              disabled={isCrossListed}
+                              value={field.value.toString()}
+                              onValueChange={(value) => {
+                                const numValue = Number(value);
+                                field.onChange(numValue);
+                                onGSTRateChange(numValue);
                               }}
-                            />
-                            <Button 
-                              variant="outline" 
-                              type="button"
-                              onClick={handleAddFeature}
                             >
-                              Add
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              type="button"
-                              onClick={() => handleGetSuggestions("features")}
-                              disabled={isGettingSuggestions}
-                            >
-                              {isGettingSuggestions ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Brain className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                          
-                          {features.length > 0 && (
-                            <div className="border rounded-md p-3">
-                              <ul className="space-y-2">
-                                {features.map((feature, index) => (
-                                  <li key={index} className="flex items-center justify-between">
-                                    <div className="flex items-center">
-                                      <span className="mr-2">•</span>
-                                      <span>{feature}</span>
-                                    </div>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      type="button"
-                                      onClick={() => handleRemoveFeature(index)}
-                                      className="h-6 w-6"
-                                    >
-                                      <span className="sr-only">Remove</span>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth={1.5}
-                                        stroke="currentColor"
-                                        className="h-4 w-4"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </Button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          
-                          {suggestions.features && (
-                            <div className="mt-2">
-                              <p className="text-xs text-muted-foreground mb-1">AI Suggestions:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {suggestions.features.map((suggestion, index) => (
-                                  <Badge 
-                                    key={index}
-                                    variant="outline"
-                                    className="cursor-pointer hover:bg-primary/10 flex items-center gap-1"
-                                    onClick={() => handleApplySuggestion("features", suggestion.text)}
-                                  >
-                                    {suggestion.text}
-                                    <Button variant="ghost" size="icon" type="button" className="h-4 w-4 p-0 ml-1">
-                                      <Check className="h-3 w-3" />
-                                    </Button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </FormItem>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormItem>
-                          <FormLabel>Tags</FormLabel>
-                          <Input placeholder="e.g., outdoor, camping, sports" />
-                          <FormDescription>
-                            Comma-separated tags for better searchability
-                          </FormDescription>
-                        </FormItem>
-                        
-                        <FormItem>
-                          <FormLabel>HSN Code</FormLabel>
-                          <Input placeholder="Enter HSN code" />
-                          <FormDescription>
-                            Harmonized System Nomenclature code for your product
-                          </FormDescription>
-                        </FormItem>
-                      </div>
-                      
-                      <div className="flex justify-end gap-2 mt-4">
-                        <Button type="button" variant="outline" onClick={() => setActiveTab("core")}>
-                          Back
-                        </Button>
-                        <Button type="button" onClick={() => setActiveTab("logistics")}>
-                          Next: Logistics
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="logistics">
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold mb-4">Logistics & Pricing</h2>
-                    
-                    {isDigital ? (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormItem>
-                            <FormLabel>Delivery Method <span className="text-red-500">*</span></FormLabel>
-                            <Select>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select delivery method" />
-                              </SelectTrigger>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select GST rate" />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                <SelectItem value="email">Email</SelectItem>
-                                <SelectItem value="download">Download Link</SelectItem>
-                                <SelectItem value="cloud">Cloud Access</SelectItem>
+                                {gstRates.map((rate) => (
+                                  <SelectItem key={rate} value={rate.toString()}>
+                                    {rate}%
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
+                            <FormMessage />
                           </FormItem>
-                          
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="totalPriceWithGST"
+                        render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Access URL</FormLabel>
-                            <Input placeholder="https://" />
+                            <FormLabel>MRP (with GST)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                {...field}
+                                readOnly
+                              />
+                            </FormControl>
                             <FormDescription>
-                              URL where the digital product can be accessed
+                              Auto-calculated based on base price and GST rate
                             </FormDescription>
+                            <FormMessage />
                           </FormItem>
-                        </div>
-                        
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="moq"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minimum Order Quantity</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="1"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="samplePrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sample Price</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Price for a single sample unit (optional)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="pricingModel"
+                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Downloadable File</FormLabel>
-                          <div className="border border-dashed rounded-md p-8 flex flex-col items-center justify-center">
-                            <Upload className="h-10 w-10 text-muted-foreground mb-4" />
-                            <p className="font-medium mb-1">Upload File</p>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              PDF or ZIP file, max 50MB
-                            </p>
-                            <Button size="sm" type="button">Browse Files</Button>
+                          <div className="mb-2">
+                            <FormLabel>Pricing Model</FormLabel>
                           </div>
+                          <FormControl>
+                            <RadioGroup
+                              disabled={isCrossListed}
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="flex gap-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Flat" id="flat" />
+                                <FormLabel htmlFor="flat" className="font-normal">Flat Price</FormLabel>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Tiered" id="tiered" />
+                                <FormLabel htmlFor="tiered" className="font-normal">Tiered Pricing</FormLabel>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
-                        
-                        <FormItem>
-                          <FormLabel>License Key</FormLabel>
-                          <Input placeholder="Enter license key or template" />
-                          <FormDescription>
-                            Template or actual license key for digital access
-                          </FormDescription>
-                        </FormItem>
-                      </div>
-                    ) : (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormItem>
-                            <FormLabel>Country of Origin <span className="text-red-500">*</span></FormLabel>
-                            <Input placeholder="e.g., India" />
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Dimensions <span className="text-red-500">*</span></FormLabel>
-                            <Input placeholder="L×B×H (cm)" />
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Weight <span className="text-red-500">*</span></FormLabel>
-                            <Input type="number" placeholder="Weight in grams" />
-                          </FormItem>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormItem>
-                            <FormLabel>Inventory Management <span className="text-red-500">*</span></FormLabel>
-                            <Select>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select option" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="yes">Managed by Vendor</SelectItem>
-                                <SelectItem value="no">Managed by BaseCampMart</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Pickup Pincode</FormLabel>
-                            <Input placeholder="6-digit pincode" />
-                          </FormItem>
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormItem>
-                            <FormLabel>Minimum Order Quantity <span className="text-red-500">*</span></FormLabel>
-                            <Input type="number" placeholder="MOQ" min="1" />
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Sample Price <span className="text-red-500">*</span></FormLabel>
-                            <Input placeholder="Price in ₹" />
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Dispatch SLA <span className="text-red-500">*</span></FormLabel>
-                            <Input type="number" placeholder="Days" min="1" />
-                          </FormItem>
-                        </div>
-                        
-                        <FormItem>
-                          <FormLabel>Tiered Pricing <span className="text-red-500">*</span></FormLabel>
-                          <div className="border rounded-md p-4">
-                            <div className="grid grid-cols-2 gap-4 mb-2">
-                              <div>
-                                <label className="text-xs text-muted-foreground">Quantity Range</label>
-                                <Input placeholder="e.g., 1-99" />
-                              </div>
-                              <div>
-                                <label className="text-xs text-muted-foreground">Price (₹)</label>
-                                <Input placeholder="e.g., 499" />
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4 mb-2">
-                              <div>
-                                <Input placeholder="e.g., 100-499" />
-                              </div>
-                              <div>
-                                <Input placeholder="e.g., 450" />
-                              </div>
-                            </div>
-                            
-                            <Button variant="outline" size="sm" type="button" className="w-full mt-2">
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Tier
-                            </Button>
+                      )}
+                    />
+                    
+                    {watchPricingModel === "Tiered" && (
+                      <div className="space-y-4">
+                        <FormLabel>Tiered Pricing</FormLabel>
+                        <div className="space-y-2">
+                          {/* Tiered pricing controls would be implemented here */}
+                          <div className="text-sm text-muted-foreground">
+                            Tiered pricing implementation would go here
                           </div>
-                        </FormItem>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormItem>
-                            <FormLabel>Lead Time <span className="text-red-500">*</span></FormLabel>
-                            <Input placeholder="e.g., 3-5 days for 1-99 units" />
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Pricing Validity <span className="text-red-500">*</span></FormLabel>
-                            <div className="flex">
-                              <Input type="date" />
-                              <Button variant="outline" size="icon" type="button" className="ml-2">
-                                <Calendar className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </FormItem>
                         </div>
                       </div>
                     )}
                     
-                    <div className="flex justify-end gap-2 mt-6">
-                      <Button type="button" variant="outline" onClick={() => setActiveTab("ai")}>
-                        Back
-                      </Button>
-                      <Button type="button" onClick={() => setActiveTab(isDigital ? "category" : "branding")}>
-                        {isDigital ? "Next: Category Details" : "Next: Branding"}
-                      </Button>
-                    </div>
-                  </Card>
-                </TabsContent>
-                
-                {!isDigital && (
-                  <TabsContent value="branding">
-                    <Card className="p-6">
-                      <h2 className="text-xl font-bold mb-4">Branding Options</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="leadTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Lead Time</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., 7-10 days"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
-                      <div className="grid gap-6">
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Branding Available</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="pricingValidity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pricing Valid Until</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="date"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Logistics
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Logistics Section */}
+              <TabsContent value="logistics" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="weight"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Weight (grams)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Weight in grams"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="dimensions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dimensions (L×B×H in cm)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., 10×5×2"
+                                {...field}
+                              />
+                            </FormControl>
                             <FormDescription>
-                              Enable if this product can be branded with logos
+                              Format: Length × Breadth × Height
                             </FormDescription>
-                          </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="dispatchSLA"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dispatch SLA (days)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Days to dispatch"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="countryOfOrigin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country of Origin</FormLabel>
                           <FormControl>
-                            <Switch
-                              checked={brandingAvailable}
-                              onCheckedChange={setBrandingAvailable}
+                            <Input
+                              placeholder="e.g., India"
+                              {...field}
                             />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
-                        
-                        {brandingAvailable && (
-                          <div className="space-y-4">
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Branding
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Branding Section */}
+              <TabsContent value="branding" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-6">
+                    <FormField
+                      control={form.control}
+                      name="brandingAvailable"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <FormLabel>Branding Available</FormLabel>
+                              <FormDescription>
+                                Can this product be customized with branding?
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                className="flex gap-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="Yes" id="branding-yes" />
+                                  <FormLabel htmlFor="branding-yes" className="font-normal">Yes</FormLabel>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="No" id="branding-no" />
+                                  <FormLabel htmlFor="branding-no" className="font-normal">No</FormLabel>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {watchBrandingAvailable === "Yes" && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="brandingMethods"
+                          render={({ field }) => (
                             <FormItem>
                               <FormLabel>Branding Methods</FormLabel>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                {category && brandingMethods && (
-                                  <>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>UV Print</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>Screen</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>Embroidery</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>Sticker</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>Foil</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                      <input type="checkbox" className="rounded" />
-                                      <span>Laser</span>
-                                    </label>
-                                  </>
-                                )}
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                                {brandingMethods[watchCategory]?.map((method) => (
+                                  <FormItem
+                                    key={method}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={(field.value || []).includes(method)}
+                                        onCheckedChange={(checked) => {
+                                          const currentValues = field.value || [];
+                                          const newValues = checked
+                                            ? [...currentValues, method]
+                                            : currentValues.filter((value) => value !== method);
+                                          field.onChange(newValues);
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">{method}</FormLabel>
+                                  </FormItem>
+                                ))}
                               </div>
+                              <FormMessage />
                             </FormItem>
-                            
-                            <div className="bg-brand-yellow/10 border-brand-yellow border rounded-md p-4">
-                              <h3 className="font-medium flex items-center mb-2">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth={1.5}
-                                  stroke="currentColor"
-                                  className="h-5 w-5 mr-2 text-brand-yellow"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                                  />
-                                </svg>
-                                Branding Zone Definition
-                              </h3>
-                              <p className="text-sm mb-4">
-                                Use our interactive Branding Canvas to define zones and preview branding methods on your product.
-                              </p>
-                              <Button variant="secondary" type="button">
-                                Open Branding Canvas
-                              </Button>
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        />
                         
-                        <Separator />
-                        
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Certification Required</FormLabel>
-                            <FormDescription>
-                              Enable if this product requires certification
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={certificationRequired}
-                              onCheckedChange={setCertificationRequired}
-                            />
-                          </FormControl>
-                        </FormItem>
-                        
-                        {certificationRequired && (
-                          <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="brandingCost"
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Certificate Type</FormLabel>
-                              <Select>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select certificate type" />
-                                </SelectTrigger>
+                              <FormLabel>Branding Cost (per unit)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="brandingGstRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Branding GST Rate (%)</FormLabel>
+                              <Select
+                                value={field.value.toString()}
+                                onValueChange={(value) => field.onChange(Number(value))}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select GST rate" />
+                                  </SelectTrigger>
+                                </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="iso">ISO</SelectItem>
-                                  <SelectItem value="fssai">FSSAI</SelectItem>
-                                  <SelectItem value="bis">BIS</SelectItem>
-                                  <SelectItem value="rohs">RoHS</SelectItem>
-                                  <SelectItem value="ce">CE</SelectItem>
-                                  <SelectItem value="fda">FDA</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
+                                  {gstRates.map((rate) => (
+                                    <SelectItem key={rate} value={rate.toString()}>
+                                      {rate}%
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
+                              <FormDescription>
+                                Default is 18% for most branding services
+                              </FormDescription>
+                              <FormMessage />
                             </FormItem>
+                          )}
+                        />
+                        
+                        {watchProductImages.length > 0 && (
+                          <div className="space-y-4">
+                            <div>
+                              <FormLabel>Branding Zones</FormLabel>
+                              <FormDescription>
+                                Define areas where branding can be applied to your product
+                              </FormDescription>
+                            </div>
                             
-                            <FormItem>
-                              <FormLabel>Certificate Upload</FormLabel>
-                              <div className="border border-dashed rounded-md p-6 flex flex-col items-center justify-center">
-                                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                                <p className="text-sm font-medium mb-1">Upload Certificate</p>
-                                <p className="text-xs text-muted-foreground mb-3">
-                                  PDF format, max 10MB
-                                </p>
-                                <Button size="sm" variant="outline" type="button">Browse Files</Button>
+                            {/* Image selection tabs */}
+                            {watchProductImages.length > 1 && (
+                              <div className="flex space-x-2 overflow-x-auto pb-2">
+                                {watchProductImages.map((img, idx) => (
+                                  <Button
+                                    key={idx}
+                                    type="button"
+                                    variant={selectedImageIndex === idx ? "default" : "outline"}
+                                    size="sm"
+                                    className="flex-shrink-0"
+                                    onClick={() => setSelectedImageIndex(idx)}
+                                  >
+                                    Image {idx + 1}
+                                  </Button>
+                                ))}
                               </div>
-                            </FormItem>
+                            )}
+                            
+                            <FormField
+                              control={form.control}
+                              name="brandingZones"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <BrandingZoneEditor
+                                      imageUrl={watchProductImages[selectedImageIndex] || ""}
+                                      category={watchCategory}
+                                      zones={field.value || []}
+                                      onChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           </div>
                         )}
-                        
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button type="button" variant="outline" onClick={() => setActiveTab("logistics")}>
-                            Back
-                          </Button>
-                          <Button type="button" onClick={() => setActiveTab("category")}>
-                            Next: Category Details
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  </TabsContent>
-                )}
-                
-                <TabsContent value="category">
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold mb-4">Category-Specific Details</h2>
-                    
-                    {category === "bottles" && (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormItem>
-                            <FormLabel>Material <span className="text-red-500">*</span></FormLabel>
-                            <Select defaultValue="stainless">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select material" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="stainless">Stainless Steel</SelectItem>
-                                <SelectItem value="plastic">Plastic</SelectItem>
-                                <SelectItem value="glass">Glass</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Capacity <span className="text-red-500">*</span></FormLabel>
-                            <Select defaultValue="500">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select capacity" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="250">250 ml</SelectItem>
-                                <SelectItem value="500">500 ml</SelectItem>
-                                <SelectItem value="750">750 ml</SelectItem>
-                                <SelectItem value="1000">1000 ml</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Insulation</FormLabel>
-                            <Select defaultValue="none">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select insulation" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="single">Single Wall</SelectItem>
-                                <SelectItem value="double">Double Wall</SelectItem>
-                                <SelectItem value="none">None</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        </div>
-                      </div>
+                      </>
                     )}
-                    
-                    {category === "apparel" && (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Packaging
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Packaging Section */}
+              <TabsContent value="packaging" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="internalPackagingType"
+                        render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Material <span className="text-red-500">*</span></FormLabel>
-                            <Select defaultValue="cotton">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select material" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="cotton">Cotton</SelectItem>
-                                <SelectItem value="polyester">Polyester</SelectItem>
-                                <SelectItem value="blend">Blend</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Internal Packaging Type</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., Box, Pouch, etc."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
                           </FormItem>
-                          
-                          <div>
-                            <FormLabel>Sizes <span className="text-red-500">*</span></FormLabel>
-                            <div className="grid grid-cols-3 gap-2">
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>XS</span>
-                              </label>
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>S</span>
-                              </label>
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>M</span>
-                              </label>
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>L</span>
-                              </label>
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>XL</span>
-                              </label>
-                              <label className="flex items-center space-x-2 border rounded-md p-2 cursor-pointer hover:bg-muted/50">
-                                <input type="checkbox" className="rounded" />
-                                <span>XXL</span>
-                              </label>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="internalDimensions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Internal Dimensions (L×B×H in cm)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., 10×5×2"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="insertCompatible"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div>
+                              <FormLabel>Insert Compatible</FormLabel>
+                              <FormDescription>
+                                Can this product include marketing inserts?
+                              </FormDescription>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    {category === "diaries" && (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {watchInsertCompatible && (
+                      <FormField
+                        control={form.control}
+                        name="insertType"
+                        render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cover Type <span className="text-red-500">*</span></FormLabel>
-                            <Select defaultValue="hardcover">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select cover type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="hardcover">Hardcover</SelectItem>
-                                <SelectItem value="softcover">Softcover</SelectItem>
-                                <SelectItem value="leather">Leather</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Insert Types</FormLabel>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                              {["Manual", "Gift Card", "Sticker", "Thank You Note", "Other"].map((type) => (
+                                <FormItem
+                                  key={type}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={(field.value || []).includes(type)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = field.value || [];
+                                        const newValues = checked
+                                          ? [...currentValues, type]
+                                          : currentValues.filter((value) => value !== type);
+                                        field.onChange(newValues);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">{type}</FormLabel>
+                                </FormItem>
+                              ))}
+                            </div>
+                            <FormMessage />
                           </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Page Count <span className="text-red-500">*</span></FormLabel>
-                            <Select defaultValue="200">
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select page count" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="100">100 pages</SelectItem>
-                                <SelectItem value="200">200 pages</SelectItem>
-                                <SelectItem value="300">300 pages</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {category === "digital_products" && (
-                      <div className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormItem>
-                            <FormLabel>File Format <span className="text-red-500">*</span></FormLabel>
-                            <Select>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select file format" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pdf">PDF</SelectItem>
-                                <SelectItem value="zip">ZIP</SelectItem>
-                                <SelectItem value="mp4">MP4</SelectItem>
-                                <SelectItem value="exe">EXE</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                          
-                          <FormItem>
-                            <FormLabel>Version</FormLabel>
-                            <Input placeholder="e.g., 1.0.0" />
-                          </FormItem>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {!category && (
-                      <div className="py-8 text-center text-muted-foreground">
-                        <p>Please select a category in the Core Details step first.</p>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-end gap-2 mt-6">
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        onClick={() => setActiveTab(isDigital ? "logistics" : "branding")}
-                      >
-                        Back
-                      </Button>
-                      <Button type="submit" disabled={isLoading}>
-                        {isLoading ? (
-                          <>
-                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                            Submitting...
-                          </>
-                        ) : (
-                          "Submit Product"
                         )}
-                      </Button>
+                      />
+                    )}
+                    
+                    <Separator />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="externalPackagingType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>External Packaging Type</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., Corrugated Box, Mailer"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="externalDimensions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>External Dimensions (L×B×H in cm)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., 15×10×5"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  </Card>
-                </TabsContent>
-              </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="fragileHandling"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div>
+                              <FormLabel>Fragile Handling Required</FormLabel>
+                              <FormDescription>
+                                Does this product require special handling?
+                              </FormDescription>
+                            </div>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Certification
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Certification Section */}
+              <TabsContent value="certification" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-6">
+                    <FormField
+                      control={form.control}
+                      name="certificationRequired"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="mb-2">
+                            <FormLabel>Certification Required</FormLabel>
+                          </div>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="flex gap-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Yes" id="cert-yes" />
+                                <FormLabel htmlFor="cert-yes" className="font-normal">Yes</FormLabel>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="No" id="cert-no" />
+                                <FormLabel htmlFor="cert-no" className="font-normal">No</FormLabel>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {watchCertificationRequired === "Yes" && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="certificateType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certificate Type</FormLabel>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select certificate type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["ISO", "FSSAI", "BIS", "RoHS", "CE", "FDA", "Other"].map((type) => (
+                                    <SelectItem key={type} value={type}>
+                                      {type}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="certificateUpload"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Upload Certificate</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="file"
+                                  accept=".pdf"
+                                  onChange={(e) => {
+                                    // In a real app, you'd handle the file upload
+                                    if (e.target.files?.[0]) {
+                                      field.onChange(e.target.files[0].name);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Upload PDF file (max 10MB)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="button" onClick={goToNextTab}>
+                    Next: Cross-Listing
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Cross-Listing Section - Only shown when cross-listing is enabled */}
+              <TabsContent value="crossListing" className="space-y-6 mt-0">
+                <Card>
+                  <CardContent className="pt-6 grid gap-6">
+                    <FormField
+                      control={form.control}
+                      name="originalVendorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Original Vendor ID</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter vendor ID"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cgcsCustomBranding"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div>
+                              <FormLabel>Custom Branding</FormLabel>
+                              <FormDescription>
+                                Are you offering custom branding on this cross-listed product?
+                              </FormDescription>
+                            </div>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="crosslistBrandingPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Branding Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Your branding service price for this cross-listed product
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={goToPrevTab}>
+                    Back
+                  </Button>
+                  <Button type="submit">
+                    Submit Listing
+                  </Button>
+                </div>
+              </TabsContent>
             </Tabs>
+            
+            {/* Final submission button (only shown on the last section if not cross-listing) */}
+            {activeTab !== "crossListing" && activeTab === formSections[formSections.length - 1].id && (
+              <div className="flex justify-end mt-6">
+                <Button type="submit">
+                  Submit Listing
+                </Button>
+              </div>
+            )}
           </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
 }
