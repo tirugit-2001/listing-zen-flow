@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Image as KonvaImage, Transformer } from "react-konva";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Download, Plus, Trash, Check, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  Download, 
+  Plus, 
+  Trash, 
+  Check, 
+  Image as ImageIcon, 
+  RefreshCw, 
+  Sparkles, 
+  Menu, 
+  Copy, 
+  Share, 
+  BarChart2 
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type BrandingCanvasProps = {
   category?: Category;
@@ -41,7 +65,33 @@ type Logo = {
   selected: boolean;
 };
 
-const brandingMethods = ["UV Print", "Screen", "Embroidery", "Sticker", "Foil", "Laser"];
+type ABTestVariant = {
+  id: string;
+  name: string;
+  zones: Zone[];
+  logos: Logo[];
+  performance?: {
+    views: number;
+    clicks: number;
+    ctr: number;
+  };
+};
+
+type CrossListingProfile = {
+  id: string;
+  name: string;
+  vendorId: string;
+  vendorType: string;
+  customBranding: boolean;
+  customPricing?: {
+    basePriceWithoutGST: number;
+    gstRate: number;
+    brandingCost: number;
+    brandingGstRate: number;
+  };
+};
+
+const brandingMethods = ["UV Print", "Screen", "Embroidery", "Sticker", "Foil", "Laser", "Digital Print", "Pad Print"];
 
 export default function BrandingCanvas({ category = "bottles", initialImage }: BrandingCanvasProps) {
   const { toast } = useToast();
@@ -58,6 +108,18 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mockups, setMockups] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // New state for A/B testing
+  const [abTestingEnabled, setAbTestingEnabled] = useState(false);
+  const [abTestVariants, setAbTestVariants] = useState<ABTestVariant[]>([
+    { id: "default", name: "Default", zones: [], logos: [] }
+  ]);
+  const [currentVariant, setCurrentVariant] = useState<string>("default");
+  
+  // New state for cross-listing
+  const [crossListingEnabled, setCrossListingEnabled] = useState(false);
+  const [crossListingProfiles, setCrossListingProfiles] = useState<CrossListingProfile[]>([]);
+  const [selectedCrossListingProfile, setSelectedCrossListingProfile] = useState<string | null>(null);
 
   // Load initial image
   useEffect(() => {
@@ -81,6 +143,15 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     };
   }, [initialImage]);
 
+  // Sync zones and logos with current A/B test variant
+  useEffect(() => {
+    const variant = abTestVariants.find(v => v.id === currentVariant);
+    if (variant) {
+      setZones(variant.zones);
+      setLogos(variant.logos);
+    }
+  }, [currentVariant, abTestVariants]);
+
   // Auto-detect zones based on category
   const detectZones = async () => {
     setIsAnalyzing(true);
@@ -103,6 +174,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
         }));
         
         setZones(newZones);
+        
+        // Update current A/B test variant with new zones
+        if (abTestingEnabled) {
+          setAbTestVariants(prev => 
+            prev.map(v => 
+              v.id === currentVariant 
+                ? { ...v, zones: newZones } 
+                : v
+            )
+          );
+        }
         
         toast({
           title: "Zones detected",
@@ -139,6 +221,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     setZones(newZones);
     setSelectedZone(zone);
     setSelectedLogo(null);
+    
+    // Update current A/B test variant
+    if (abTestingEnabled) {
+      setAbTestVariants(prev => 
+        prev.map(v => 
+          v.id === currentVariant 
+            ? { ...v, zones: newZones } 
+            : v
+        )
+      );
+    }
   };
 
   // Add a new zone
@@ -164,6 +257,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     
     setZones(newZones);
     setSelectedZone(newZone);
+    
+    // Update current A/B test variant
+    if (abTestingEnabled) {
+      setAbTestVariants(prev => 
+        prev.map(v => 
+          v.id === currentVariant 
+            ? { ...v, zones: newZones } 
+            : v
+        )
+      );
+    }
   };
 
   // Remove a zone
@@ -178,6 +282,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     // Remove any logos in this zone
     const newLogos = logos.filter(l => l.zoneId !== id);
     setLogos(newLogos);
+    
+    // Update current A/B test variant
+    if (abTestingEnabled) {
+      setAbTestVariants(prev => 
+        prev.map(v => 
+          v.id === currentVariant 
+            ? { ...v, zones: newZones, logos: newLogos } 
+            : v
+        )
+      );
+    }
   };
 
   // Update zone properties
@@ -190,6 +305,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     
     if (selectedZone?.id === id) {
       setSelectedZone(prev => prev ? { ...prev, ...updates } : null);
+    }
+    
+    // Update current A/B test variant
+    if (abTestingEnabled) {
+      setAbTestVariants(prev => 
+        prev.map(v => 
+          v.id === currentVariant 
+            ? { ...v, zones: newZones } 
+            : v
+        )
+      );
     }
   };
 
@@ -258,6 +384,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
       setLogos(filteredLogos);
       setSelectedLogo(newLogo);
       setCanvasMode("logo");
+      
+      // Update current A/B test variant
+      if (abTestingEnabled) {
+        setAbTestVariants(prev => 
+          prev.map(v => 
+            v.id === currentVariant 
+              ? { ...v, logos: filteredLogos } 
+              : v
+          )
+        );
+      }
     };
   };
 
@@ -361,6 +498,81 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     }
   };
 
+  // A/B Testing functions
+  const addVariant = () => {
+    const newVariant: ABTestVariant = {
+      id: `variant-${Date.now()}`,
+      name: `Variant ${abTestVariants.length + 1}`,
+      zones: [],
+      logos: []
+    };
+    
+    setAbTestVariants(prev => [...prev, newVariant]);
+    setCurrentVariant(newVariant.id);
+  };
+
+  const removeVariant = (id: string) => {
+    if (abTestVariants.length <= 1) {
+      toast({
+        title: "Cannot remove variant",
+        description: "You must have at least one variant.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setAbTestVariants(prev => prev.filter(v => v.id !== id));
+    
+    if (currentVariant === id) {
+      setCurrentVariant(abTestVariants[0].id);
+    }
+  };
+
+  const renameVariant = (id: string, name: string) => {
+    setAbTestVariants(prev => 
+      prev.map(v => 
+        v.id === id 
+          ? { ...v, name } 
+          : v
+      )
+    );
+  };
+
+  // Cross-listing functions
+  const addCrossListingProfile = () => {
+    const mockProfiles: CrossListingProfile[] = [
+      {
+        id: "profile-1",
+        name: "ABC Enterprises",
+        vendorId: "vendor-123",
+        vendorType: "Corporate",
+        customBranding: true,
+        customPricing: {
+          basePriceWithoutGST: 450,
+          gstRate: 18,
+          brandingCost: 50,
+          brandingGstRate: 18
+        }
+      },
+      {
+        id: "profile-2",
+        name: "XYZ Solutions",
+        vendorId: "vendor-456",
+        vendorType: "Corporate",
+        customBranding: false
+      }
+    ];
+    
+    setCrossListingProfiles(mockProfiles);
+    setSelectedCrossListingProfile(mockProfiles[0].id);
+    setCrossListingEnabled(true);
+    
+    toast({
+      title: "Cross-listing profiles loaded",
+      description: "Mock profiles have been loaded for demonstration.",
+    });
+  };
+
   useEffect(() => {
     if (!selectedZone && !selectedLogo) {
       if (transformerRef.current) {
@@ -386,14 +598,164 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     <Card className="max-w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Branding Canvas</span>
-          <Badge>{category}</Badge>
+          <div className="flex items-center gap-2">
+            <span>Branding Canvas</span>
+            <Badge>{category}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="ab-testing" className="text-sm font-normal">A/B Testing</Label>
+              <Switch
+                id="ab-testing"
+                checked={abTestingEnabled}
+                onCheckedChange={setAbTestingEnabled}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Canvas Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={saveTemplate}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Save Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCrossListingEnabled(!crossListingEnabled)}>
+                  <Share className="mr-2 h-4 w-4" />
+                  {crossListingEnabled ? "Hide Cross-listing" : "Enable Cross-listing"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={generateMockup}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Generate Mockups
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardTitle>
         <CardDescription>
           Add branding zones and preview different branding methods on your product
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* A/B Testing Variant Selector */}
+        {abTestingEnabled && (
+          <div className="mb-4 border rounded-md p-4 bg-muted/20">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">A/B Testing Variants</h3>
+              <Button size="sm" variant="outline" onClick={addVariant}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Variant
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {abTestVariants.map(variant => (
+                <div 
+                  key={variant.id}
+                  className={`border rounded-md px-3 py-1.5 cursor-pointer transition-colors ${
+                    currentVariant === variant.id 
+                      ? 'bg-primary/20 border-primary' 
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => setCurrentVariant(variant.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{variant.name}</span>
+                    {variant.performance && (
+                      <Badge variant="outline" className="text-xs">
+                        CTR: {variant.performance.ctr.toFixed(1)}%
+                      </Badge>
+                    )}
+                    {abTestVariants.length > 1 && (
+                      <button
+                        className="text-muted-foreground hover:text-destructive ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeVariant(variant.id);
+                        }}
+                      >
+                        <Trash className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cross-listing Profiles */}
+        {crossListingEnabled && (
+          <div className="mb-4 border rounded-md p-4 bg-muted/20">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Cross-listing Profiles</h3>
+              {crossListingProfiles.length === 0 && (
+                <Button size="sm" variant="outline" onClick={addCrossListingProfile}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Profiles
+                </Button>
+              )}
+            </div>
+            {crossListingProfiles.length > 0 ? (
+              <div className="space-y-2">
+                <Select
+                  value={selectedCrossListingProfile || ""}
+                  onValueChange={setSelectedCrossListingProfile}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a profile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {crossListingProfiles.map(profile => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name} ({profile.vendorType})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {selectedCrossListingProfile && (
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    {crossListingProfiles
+                      .filter(p => p.id === selectedCrossListingProfile)
+                      .map(profile => (
+                        <div key={profile.id} className="border rounded-md p-3 bg-background">
+                          <div className="font-medium mb-2">{profile.name}</div>
+                          <div className="text-muted-foreground">Vendor ID: {profile.vendorId}</div>
+                          <div className="text-muted-foreground">Type: {profile.vendorType}</div>
+                          <div className="mt-2">
+                            <span className="text-xs font-medium">Custom Branding:</span>
+                            <Badge 
+                              variant={profile.customBranding ? "default" : "outline"} 
+                              className="ml-2"
+                            >
+                              {profile.customBranding ? "Yes" : "No"}
+                            </Badge>
+                          </div>
+                          {profile.customPricing && (
+                            <div className="mt-2 space-y-1 text-xs">
+                              <div className="font-medium">Custom Pricing:</div>
+                              <div>Base: ₹{profile.customPricing.basePriceWithoutGST}</div>
+                              <div>GST: {profile.customPricing.gstRate}%</div>
+                              <div>Branding: ₹{profile.customPricing.brandingCost}</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No cross-listing profiles available. Click "Add Profiles" to create some.
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-6">
           <div 
             className="w-full md:w-2/3 border rounded-lg overflow-hidden bg-gray-50"
@@ -503,6 +865,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                           }));
                           
                           setLogos(newLogos);
+                          
+                          // Update current A/B test variant
+                          if (abTestingEnabled) {
+                            setAbTestVariants(prev => 
+                              prev.map(v => 
+                                v.id === currentVariant 
+                                  ? { ...v, logos: newLogos } 
+                                  : v
+                              )
+                            );
+                          }
                         }
                       }}
                       onDragEnd={(e) => {
@@ -517,6 +890,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                         );
                         
                         setLogos(newLogos);
+                        
+                        // Update current A/B test variant
+                        if (abTestingEnabled) {
+                          setAbTestVariants(prev => 
+                            prev.map(v => 
+                              v.id === currentVariant 
+                                ? { ...v, logos: newLogos } 
+                                : v
+                            )
+                          );
+                        }
                       }}
                       onTransformEnd={(e) => {
                         const node = e.target;
@@ -540,6 +924,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                         );
                         
                         setLogos(newLogos);
+                        
+                        // Update current A/B test variant
+                        if (abTestingEnabled) {
+                          setAbTestVariants(prev => 
+                            prev.map(v => 
+                              v.id === currentVariant 
+                                ? { ...v, logos: newLogos } 
+                                : v
+                            )
+                          );
+                        }
                       }}
                     />
                   ))}
@@ -718,7 +1113,11 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                    Generate mockups to preview the branded product
+                    A/B testing allows comparing different branding layouts
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5" />
+                    Cross-listing enables shared products with custom branding
                   </li>
                 </ul>
                 
@@ -758,12 +1157,41 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                 )}
               </Button>
               
+              {abTestingEnabled && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // Simulate A/B test results
+                    const variantsWithPerformance = abTestVariants.map(v => ({
+                      ...v,
+                      performance: {
+                        views: Math.floor(Math.random() * 1000) + 100,
+                        clicks: Math.floor(Math.random() * 100) + 10,
+                        ctr: Math.random() * 10 + 1
+                      }
+                    }));
+                    
+                    setAbTestVariants(variantsWithPerformance);
+                    
+                    toast({
+                      title: "A/B Test Results",
+                      description: "Test results have been generated. The best performing variant is highlighted.",
+                    });
+                  }}
+                >
+                  <BarChart2 className="mr-2 h-4 w-4" />
+                  Analyze A/B Test Results
+                </Button>
+              )}
+              
               <Button
                 variant="outline"
                 className="w-full"
                 onClick={saveTemplate}
                 disabled={isLoading || zones.length === 0}
               >
+                <Sparkles className="mr-2 h-4 w-4" />
                 Save as Template
               </Button>
             </div>

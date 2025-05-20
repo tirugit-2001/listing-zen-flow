@@ -2,10 +2,20 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Package } from "lucide-react";
+import { Package, Upload } from "lucide-react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import BulkImport from "@/components/product/BulkImport";
 
 export default function Header() {
   const { toast } = useToast();
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   return (
     <header className="border-b shadow-sm">
@@ -34,18 +44,26 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
-            onClick={() => {
-              toast({
-                title: "Coming Soon",
-                description: "Bulk import functionality is coming soon!",
-              });
-            }}
+            onClick={() => setShowBulkImport(true)}
           >
+            <Upload className="h-4 w-4 mr-2" />
             Bulk Import
           </Button>
           <Button>View Dashboard</Button>
         </div>
       </div>
+
+      <Dialog open={showBulkImport} onOpenChange={setShowBulkImport}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Bulk Import Products</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file to import multiple products at once.
+            </DialogDescription>
+          </DialogHeader>
+          <BulkImport onClose={() => setShowBulkImport(false)} />
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }
