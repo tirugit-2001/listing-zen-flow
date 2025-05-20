@@ -372,14 +372,14 @@ export default function BulkImport() {
                 <Separator />
                 
                 <div className="max-h-60 overflow-y-auto">
-                  {validationErrors.reduce((acc: Record<number, ValidationError[]>, error) => {
+                  {/* Fix: Converting Record to array of entries before mapping */}
+                  {Object.entries(validationErrors.reduce((acc: Record<number, ValidationError[]>, error) => {
                     if (!acc[error.row]) {
                       acc[error.row] = [];
                     }
                     acc[error.row].push(error);
                     return acc;
-                  }, {})
-                  .map((rowErrors: ValidationError[], rowNumber: string) => (
+                  }, {})).map(([rowNumber, rowErrors]) => (
                     <div key={rowNumber} className="border-b">
                       <div 
                         className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50"

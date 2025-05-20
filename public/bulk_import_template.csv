@@ -1,5 +1,4 @@
-
 productName,category,subcategory,productImages,hsnCode,moq,tieredPricing,basePriceWithoutGST,gstRate,material,capacity,brandingAvailable,brandingMethods
-"Steel Bottle 500ml","bottles","Stainless Steel","https://cdn.example.com/bottle-front.jpg","7323",100,"{'1-100': 500; '101-500': 450}",500,18,"Stainless Steel",500,"Yes","UV Print,Laser"
+"Steel Bottle 500ml","bottles","Stainless Steel","https://cdn.example.com/bottle-front.jpg","7323",100,"{'1-100': 500; '101-500': 450}",500,18,"Stainless Steel","500ml","Yes","UV Print,Laser"
 "T-Shirt Black","apparel","T-Shirts","https://cdn.example.com/tshirt-front.jpg","6109",50,"{'1-50': 300; '51-200': 280}",280,5,"Cotton",,"Yes","Screen,Embroidery"
-"Business Diary","diaries","Hardcover","https://cdn.example.com/diary-front.jpg","4820",25,"{'1-25': 250; '26-100': 230}",230,18,"Hardcover",200,"Yes","UV Print,Foil"
+"Business Diary","diaries","Hardcover","https://cdn.example.com/diary-front.jpg","4820",25,"{'1-25': 250; '26-100': 230}",230,18,"Hardcover","200","Yes","UV Print,Foil"
