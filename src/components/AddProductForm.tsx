@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Category, categories, subcategories, brandingMethods, gstRates } from "@/lib/schema";
-import { getFullProductSchema, getInitialValues, getFormSections, ProductFormValues } from "@/lib/product-form-schema";
+import { 
+  getFullProductSchema, 
+  getInitialValues, 
+  getFormSections, 
+  ProductFormValues, 
+  BrandingZone
+} from "@/lib/product-form-schema";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -35,7 +42,7 @@ export default function AddProductForm() {
     mode: "onChange",
   });
   
-  const { watch, setValue, getValues, formState } = form;
+  const { watch, setValue, getValues, control, formState } = form;
   
   // Watch key fields for conditional logic
   const watchBrandingAvailable = watch("brandingAvailable");
@@ -58,6 +65,9 @@ export default function AddProductForm() {
     if (brandingMethods[newCategory as Category]) {
       setValue("brandingMethods", []);
     }
+    
+    // Update category-specific fields with default values
+    setValue("categorySpecific", getInitialValues(newCategory as Category).categorySpecific);
   };
   
   // Calculate GST amount based on price and rate
@@ -360,7 +370,7 @@ export default function AddProductForm() {
                               <FormLabel>Material</FormLabel>
                               <Select
                                 disabled={isCrossListed}
-                                value={field.value}
+                                value={field.value as string}
                                 onValueChange={field.onChange}
                               >
                                 <FormControl>
@@ -391,7 +401,7 @@ export default function AddProductForm() {
                                 <Input
                                   type="number"
                                   placeholder="Capacity in ml"
-                                  {...field}
+                                  value={field.value as number}
                                   onChange={(e) => field.onChange(Number(e.target.value))}
                                 />
                               </FormControl>
@@ -408,7 +418,7 @@ export default function AddProductForm() {
                               <FormLabel>Insulation</FormLabel>
                               <Select
                                 disabled={isCrossListed}
-                                value={field.value}
+                                value={field.value as string}
                                 onValueChange={field.onChange}
                               >
                                 <FormControl>
@@ -441,7 +451,7 @@ export default function AddProductForm() {
                               <FormLabel>Material</FormLabel>
                               <Select
                                 disabled={isCrossListed}
-                                value={field.value}
+                                value={field.value as string}
                                 onValueChange={field.onChange}
                               >
                                 <FormControl>
@@ -476,7 +486,7 @@ export default function AddProductForm() {
                               <FormLabel>Cover Type</FormLabel>
                               <Select
                                 disabled={isCrossListed}
-                                value={field.value}
+                                value={field.value as string}
                                 onValueChange={field.onChange}
                               >
                                 <FormControl>
@@ -507,7 +517,7 @@ export default function AddProductForm() {
                                 <Input
                                   type="number"
                                   placeholder="Number of pages"
-                                  {...field}
+                                  value={field.value as number}
                                   onChange={(e) => field.onChange(Number(e.target.value))}
                                 />
                               </FormControl>
@@ -995,19 +1005,39 @@ export default function AddProductForm() {
                             <FormField
                               control={form.control}
                               name="brandingZones"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <BrandingZoneEditor
-                                      imageUrl={watchProductImages[selectedImageIndex] || ""}
-                                      category={watchCategory}
-                                      zones={field.value || []}
-                                      onChange={field.onChange}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
+                              render={({ field }) => {
+                                // Ensure all branding zones have an ID
+                                const ensureZonesHaveIds = (zones: Partial<BrandingZone>[]): BrandingZone[] => {
+                                  return (zones || []).map((zone) => ({
+                                    id: zone.id || uuidv4(),
+                                    label: zone.label || "",
+                                    x: zone.x || 0,
+                                    y: zone.y || 0,
+                                    width: zone.width || 100,
+                                    height: zone.height || 100,
+                                    method: zone.method || "",
+                                    logoFile: zone.logoFile,
+                                    brandedMockupUrl: zone.brandedMockupUrl,
+                                    appliedOn: zone.appliedOn
+                                  }));
+                                };
+                                
+                                return (
+                                  <FormItem>
+                                    <FormControl>
+                                      <BrandingZoneEditor
+                                        imageUrl={watchProductImages[selectedImageIndex] || ""}
+                                        category={watchCategory}
+                                        zones={ensureZonesHaveIds(field.value || [])}
+                                        onChange={(zones) => {
+                                          field.onChange(ensureZonesHaveIds(zones));
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                );
+                              }}
                             />
                           </div>
                         )}

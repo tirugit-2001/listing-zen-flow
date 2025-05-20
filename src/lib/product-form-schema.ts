@@ -2,6 +2,37 @@
 import { z } from "zod";
 import { Category, categories, subcategories, brandingMethods, gstRates } from "./schema";
 
+// Define the BrandingZone interface to be used in the form
+export interface BrandingZone {
+  id: string; // Added required id field
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  method: string;
+  logoFile?: string;
+  brandedMockupUrl?: string;
+  appliedOn?: string;
+}
+
+// Define category-specific schemas
+export const bottlesSchema = z.object({
+  material: z.string(),
+  capacity: z.number().min(1),
+  insulation: z.string(),
+});
+
+export const apparelSchema = z.object({
+  material: z.string(),
+  size: z.array(z.string()),
+});
+
+export const diariesSchema = z.object({
+  coverType: z.string(),
+  pageCount: z.number().int().min(1),
+});
+
 // Base schema for all products
 export const baseProductSchema = z.object({
   productName: z.string().min(3, "Product name must be at least 3 characters"),
@@ -37,6 +68,7 @@ export const brandingSchema = z.object({
   brandingMethods: z.array(z.string()).optional(),
   brandingZones: z.array(
     z.object({
+      id: z.string(), // Add required id field
       label: z.string(),
       x: z.number(),
       y: z.number(),
@@ -85,21 +117,11 @@ export const certificationSchema = z.object({
 export const getDynamicCategorySchema = (category: Category) => {
   switch(category) {
     case "bottles":
-      return z.object({
-        material: z.enum(["Stainless Steel", "Plastic", "Glass"]),
-        capacity: z.number().min(1),
-        insulation: z.enum(["Single Wall", "Double Wall", "None"]),
-      });
+      return bottlesSchema;
     case "apparel":
-      return z.object({
-        size: z.array(z.enum(["XS", "S", "M", "L", "XL", "XXL"])),
-        material: z.enum(["Cotton", "Polyester", "Blend"]),
-      });
+      return apparelSchema;
     case "diaries":
-      return z.object({
-        coverType: z.enum(["Hardcover", "Softcover", "Leather"]),
-        pageCount: z.number().int().min(1),
-      });
+      return diariesSchema;
     // Add other categories as needed
     default:
       return z.object({});
@@ -123,6 +145,22 @@ export type ProductFormValues = z.infer<ReturnType<typeof getFullProductSchema>>
 
 // Helper to get initial values based on category
 export const getInitialValues = (category: Category): Partial<ProductFormValues> => {
+  const categorySpecificValues = {
+    bottles: {
+      material: "Stainless Steel",
+      capacity: 750,
+      insulation: "Double Wall",
+    },
+    apparel: {
+      material: "Cotton",
+      size: ["M"],
+    },
+    diaries: {
+      coverType: "Hardcover",
+      pageCount: 100,
+    }
+  };
+
   return {
     productName: "",
     category,
@@ -146,6 +184,8 @@ export const getInitialValues = (category: Category): Partial<ProductFormValues>
     isCrossListed: false,
     insertCompatible: false,
     fragileHandling: false,
+    categorySpecific: categorySpecificValues[category] || {},
+    brandingZones: [],
   };
 };
 

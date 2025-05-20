@@ -31,7 +31,7 @@ export function ImageUploader({
         return;
       }
       
-      const img = new Image();
+      const img = document.createElement("img");
       const objectUrl = URL.createObjectURL(file);
       
       img.onload = () => {
@@ -92,7 +92,7 @@ export function ImageUploader({
       return;
     }
     
-    const img = new Image();
+    const img = document.createElement("img");
     img.onload = () => {
       if (img.width < minWidth || img.height < minHeight) {
         toast.error(`Image dimensions must be at least ${minWidth}x${minHeight}px`);
