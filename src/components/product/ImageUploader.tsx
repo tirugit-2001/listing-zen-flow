@@ -140,7 +140,7 @@ export function ImageUploader({
             <Input
               id="image-upload"
               type="file"
-              accept="image/jpeg,image/png"
+              accept="image/jpeg,image/png,image/svg+xml,application/pdf,application/postscript"
               multiple
               className="hidden"
               disabled={isUploading}
@@ -185,6 +185,8 @@ export function ImageUploader({
       
       <div className="text-xs text-muted-foreground">
         Upload studio-quality images with white background. Min resolution: {minWidth}x{minHeight}px, Max size: 5MB.
+        <br />
+        Supported formats: JPEG, PNG, SVG, PDF, AI
       </div>
     </div>
   );

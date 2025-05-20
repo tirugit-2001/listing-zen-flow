@@ -12,6 +12,12 @@ import { categories, Category } from "@/lib/schema";
 export default function BrandingCanvasPage() {
   const [category, setCategory] = useState<Category>("bottles");
   const [productImage, setProductImage] = useState<string>("/placeholder.svg");
+  const [placeholderOptions] = useState([
+    { label: "Bottle", url: "https://images.unsplash.com/photo-1581093587793-9a64230a0eaa" },
+    { label: "T-Shirt", url: "https://images.unsplash.com/photo-1576566588028-4147f3842f27" },
+    { label: "Diary", url: "https://images.unsplash.com/photo-1589454292599-bf103f59fb6e" },
+    { label: "Mug", url: "https://images.unsplash.com/photo-1577716043849-8a18f91a38cc" }
+  ]);
   
   return (
     <Layout>
@@ -26,7 +32,7 @@ export default function BrandingCanvasPage() {
             </div>
             
             <Card>
-              <CardContent className="p-4 flex items-center gap-4">
+              <CardContent className="p-4 flex flex-wrap items-center gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Category</label>
                   <Select 
@@ -48,7 +54,7 @@ export default function BrandingCanvasPage() {
                   </Select>
                 </div>
                 
-                <div>
+                <div className="flex-grow">
                   <label className="text-sm font-medium mb-1.5 block">Product Image</label>
                   <div className="flex gap-2">
                     <Input 
@@ -56,9 +62,20 @@ export default function BrandingCanvasPage() {
                       value={productImage}
                       onChange={(e) => setProductImage(e.target.value)}
                     />
-                    <Button variant="outline" size="sm">
-                      Browse
-                    </Button>
+                    <Select
+                      onValueChange={(url) => setProductImage(url)}
+                    >
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Templates" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {placeholderOptions.map((option) => (
+                          <SelectItem key={option.url} value={option.url}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

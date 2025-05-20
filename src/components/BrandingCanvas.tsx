@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Stage, Layer, Rect, Image as KonvaImage, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Circle, Image as KonvaImage, Transformer } from "react-konva";
 import { useToast } from "@/hooks/use-toast";
 import { mockApi } from "@/lib/mock-api";
 import { Category } from "@/lib/schema";
@@ -26,7 +26,9 @@ import {
   Menu, 
   Copy, 
   Share, 
-  BarChart2 
+  BarChart2,
+  Circle as CircleIcon,
+  Square
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,6 +44,8 @@ type BrandingCanvasProps = {
   initialImage?: string;
 };
 
+type ZoneShape = "rectangle" | "circle";
+
 type Zone = {
   id: string;
   label: string;
@@ -51,6 +55,7 @@ type Zone = {
   height: number;
   method: string;
   selected: boolean;
+  shape: ZoneShape;
 };
 
 type Logo = {
@@ -108,23 +113,37 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mockups, setMockups] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [newZoneShape, setNewZoneShape] = useState<ZoneShape>("rectangle");
   
-  // New state for A/B testing
+  // State for A/B testing
   const [abTestingEnabled, setAbTestingEnabled] = useState(false);
   const [abTestVariants, setAbTestVariants] = useState<ABTestVariant[]>([
     { id: "default", name: "Default", zones: [], logos: [] }
   ]);
   const [currentVariant, setCurrentVariant] = useState<string>("default");
   
-  // New state for cross-listing
+  // State for cross-listing
   const [crossListingEnabled, setCrossListingEnabled] = useState(false);
   const [crossListingProfiles, setCrossListingProfiles] = useState<CrossListingProfile[]>([]);
   const [selectedCrossListingProfile, setSelectedCrossListingProfile] = useState<string | null>(null);
 
+  // Multiple images support
+  const [productImages, setProductImages] = useState<string[]>(initialImage ? [initialImage] : []);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   // Load initial image
   useEffect(() => {
+    if (initialImage) {
+      setProductImages([initialImage]);
+      loadImage(initialImage);
+    } else {
+      loadImage("/placeholder.svg");
+    }
+  }, [initialImage]);
+
+  const loadImage = (src: string) => {
     const img = new Image();
-    img.src = initialImage || "/placeholder.svg";
+    img.src = src;
     img.onload = () => {
       setProductImage(img);
       
@@ -141,7 +160,7 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
       
       setStageSize({ width, height });
     };
-  }, [initialImage]);
+  };
 
   // Sync zones and logos with current A/B test variant
   useEffect(() => {
@@ -154,12 +173,20 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
 
   // Auto-detect zones based on category
   const detectZones = async () => {
+    if (!productImages[currentImageIndex]) {
+      toast({
+        title: "Error",
+        description: "No image available for zone detection.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsAnalyzing(true);
     
     try {
       // In a real app, this would use Vision API to analyze the image
-      // For demo, we'll use predefined templates
-      await mockApi.fetchVisionTags(initialImage || "/placeholder.svg");
+      await mockApi.fetchVisionTags(productImages[currentImageIndex]);
       
       // Get templates for this category
       const templates = zoneTemplates[category] || [];
@@ -170,12 +197,13 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
           id: `zone-${Date.now()}-${index}`,
           ...template,
           method: brandingMethods[0],
-          selected: false
+          selected: false,
+          shape: "rectangle" as ZoneShape
         }));
         
         setZones(newZones);
         
-        // Update current A/B test variant with new zones
+        // Update current A/B test variant
         if (abTestingEnabled) {
           setAbTestVariants(prev => 
             prev.map(v => 
@@ -249,7 +277,8 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
       width: 100,
       height: 100,
       method: brandingMethods[0],
-      selected: true
+      selected: true,
+      shape: newZoneShape
     };
     
     const newZones = zones.map(z => ({ ...z, selected: false }));
@@ -344,8 +373,6 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
 
   // Add logo to a zone
   const handleAddLogo = (zoneId: string, logoUrl: string) => {
-    if (!selectedZone) return;
-    
     const zone = zones.find(z => z.id === zoneId);
     if (!zone) return;
     
@@ -418,7 +445,7 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
         if (!logo) return null;
         
         const mockupUrl = await mockApi.fetchDynamicMockup(
-          initialImage || "/placeholder.svg",
+          productImages[currentImageIndex] || "/placeholder.svg",
           logo.url,
           [{
             x: zone.x,
@@ -454,123 +481,69 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
     }
   };
 
-  // Save branding template
-  const saveTemplate = async () => {
-    if (zones.length === 0) {
-      toast({
-        title: "Cannot save template",
-        description: "Please add at least one zone first.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      const templateData = {
-        category,
-        zones: zones.map(zone => ({
-          label: zone.label,
-          x: zone.x,
-          y: zone.y,
-          width: zone.width,
-          height: zone.height,
-          method: zone.method
-        }))
-      };
-      
-      const result = await mockApi.saveTemplate(templateData);
-      
-      toast({
-        title: "Template saved",
-        description: `Template has been saved with ID: ${result.id}`,
-      });
-    } catch (error) {
-      console.error(error);
+  // Export canvas as PNG
+  const exportCanvasAsPng = () => {
+    if (!stageRef.current) {
       toast({
         title: "Error",
-        description: "Failed to save template. Please try again.",
+        description: "Canvas is not ready for export.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
+      return null;
+    }
+    
+    try {
+      // Temporarily hide transformer
+      const transformer = transformerRef.current;
+      if (transformer) {
+        transformer.nodes([]);
+      }
+      
+      // Get data URL from stage
+      const dataURL = stageRef.current.toDataURL({ 
+        pixelRatio: 2, 
+        mimeType: "image/png" 
+      });
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.download = `branding-mockup-${Date.now()}.png`;
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export successful",
+        description: "Canvas exported as PNG.",
+      });
+      
+      return dataURL;
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "Unable to export canvas as PNG.",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
-  // A/B Testing functions
-  const addVariant = () => {
-    const newVariant: ABTestVariant = {
-      id: `variant-${Date.now()}`,
-      name: `Variant ${abTestVariants.length + 1}`,
-      zones: [],
-      logos: []
-    };
-    
-    setAbTestVariants(prev => [...prev, newVariant]);
-    setCurrentVariant(newVariant.id);
-  };
-
-  const removeVariant = (id: string) => {
-    if (abTestVariants.length <= 1) {
+  // Add new image
+  const handleAddImage = (url: string) => {
+    if (productImages.includes(url)) {
       toast({
-        title: "Cannot remove variant",
-        description: "You must have at least one variant.",
+        title: "Duplicate image",
+        description: "This image has already been added.",
         variant: "destructive"
       });
       return;
     }
     
-    setAbTestVariants(prev => prev.filter(v => v.id !== id));
-    
-    if (currentVariant === id) {
-      setCurrentVariant(abTestVariants[0].id);
-    }
-  };
-
-  const renameVariant = (id: string, name: string) => {
-    setAbTestVariants(prev => 
-      prev.map(v => 
-        v.id === id 
-          ? { ...v, name } 
-          : v
-      )
-    );
-  };
-
-  // Cross-listing functions
-  const addCrossListingProfile = () => {
-    const mockProfiles: CrossListingProfile[] = [
-      {
-        id: "profile-1",
-        name: "ABC Enterprises",
-        vendorId: "vendor-123",
-        vendorType: "Corporate",
-        customBranding: true,
-        customPricing: {
-          basePriceWithoutGST: 450,
-          gstRate: 18,
-          brandingCost: 50,
-          brandingGstRate: 18
-        }
-      },
-      {
-        id: "profile-2",
-        name: "XYZ Solutions",
-        vendorId: "vendor-456",
-        vendorType: "Corporate",
-        customBranding: false
-      }
-    ];
-    
-    setCrossListingProfiles(mockProfiles);
-    setSelectedCrossListingProfile(mockProfiles[0].id);
-    setCrossListingEnabled(true);
-    
-    toast({
-      title: "Cross-listing profiles loaded",
-      description: "Mock profiles have been loaded for demonstration.",
-    });
+    setProductImages(prev => [...prev, url]);
+    setCurrentImageIndex(productImages.length);
+    loadImage(url);
   };
 
   useEffect(() => {
@@ -620,9 +593,9 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
               <DropdownMenuContent>
                 <DropdownMenuLabel>Canvas Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={saveTemplate}>
+                <DropdownMenuItem onClick={exportCanvasAsPng}>
                   <Download className="mr-2 h-4 w-4" />
-                  Save Template
+                  Export as PNG
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setCrossListingEnabled(!crossListingEnabled)}>
                   <Share className="mr-2 h-4 w-4" />
@@ -646,7 +619,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
           <div className="mb-4 border rounded-md p-4 bg-muted/20">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium">A/B Testing Variants</h3>
-              <Button size="sm" variant="outline" onClick={addVariant}>
+              <Button size="sm" variant="outline" onClick={() => {
+                const newVariant: ABTestVariant = {
+                  id: `variant-${Date.now()}`,
+                  name: `Variant ${abTestVariants.length + 1}`,
+                  zones: [],
+                  logos: []
+                };
+                
+                setAbTestVariants(prev => [...prev, newVariant]);
+                setCurrentVariant(newVariant.id);
+              }}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Variant
               </Button>
@@ -674,7 +657,13 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                         className="text-muted-foreground hover:text-destructive ml-2"
                         onClick={(e) => {
                           e.stopPropagation();
-                          removeVariant(variant.id);
+                          if (abTestVariants.length <= 1) return;
+                          
+                          setAbTestVariants(prev => prev.filter(v => v.id !== variant.id));
+                          
+                          if (currentVariant === variant.id) {
+                            setCurrentVariant(abTestVariants[0].id);
+                          }
                         }}
                       >
                         <Trash className="h-3 w-3" />
@@ -687,13 +676,93 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
           </div>
         )}
 
+        {/* Multi-image selector */}
+        {productImages.length > 0 && (
+          <div className="mb-4">
+            <h3 className="font-medium mb-2">Product Images</h3>
+            <div className="flex overflow-x-auto gap-2 pb-2">
+              {productImages.map((img, index) => (
+                <div 
+                  key={index} 
+                  className={`relative cursor-pointer border-2 rounded-md overflow-hidden ${
+                    index === currentImageIndex ? 'border-primary' : 'border-transparent'
+                  }`}
+                  onClick={() => {
+                    setCurrentImageIndex(index);
+                    loadImage(img);
+                  }}
+                >
+                  <img 
+                    src={img} 
+                    alt={`Product view ${index + 1}`} 
+                    className="h-16 w-16 object-contain"
+                  />
+                  {index === currentImageIndex && (
+                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                      <Check className="h-4 w-4 text-primary" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              <div className="flex-shrink-0 h-16 w-16 border-2 border-dashed rounded-md flex items-center justify-center">
+                <Input
+                  type="url"
+                  placeholder="Add URL"
+                  className="w-full h-full opacity-0 absolute cursor-pointer"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const url = (e.target as HTMLInputElement).value.trim();
+                      if (url) {
+                        handleAddImage(url);
+                        (e.target as HTMLInputElement).value = "";
+                      }
+                    }
+                  }}
+                />
+                <Plus className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Cross-listing Profiles */}
         {crossListingEnabled && (
           <div className="mb-4 border rounded-md p-4 bg-muted/20">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium">Cross-listing Profiles</h3>
               {crossListingProfiles.length === 0 && (
-                <Button size="sm" variant="outline" onClick={addCrossListingProfile}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => {
+                    const mockProfiles: CrossListingProfile[] = [
+                      {
+                        id: "profile-1",
+                        name: "ABC Enterprises",
+                        vendorId: "vendor-123",
+                        vendorType: "Corporate",
+                        customBranding: true,
+                        customPricing: {
+                          basePriceWithoutGST: 450,
+                          gstRate: 18,
+                          brandingCost: 50,
+                          brandingGstRate: 18
+                        }
+                      },
+                      {
+                        id: "profile-2",
+                        name: "XYZ Solutions",
+                        vendorId: "vendor-456",
+                        vendorType: "Corporate",
+                        customBranding: false
+                      }
+                    ];
+                    
+                    setCrossListingProfiles(mockProfiles);
+                    setSelectedCrossListingProfile(mockProfiles[0].id);
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Profiles
                 </Button>
@@ -794,13 +863,28 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                     "Auto-detect Zones"
                   )}
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleAddZone}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Zone
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={handleAddZone}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Zone
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Zone Shape</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => setNewZoneShape("rectangle")}>
+                      <Square className="h-4 w-4 mr-2" />
+                      Rectangle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setNewZoneShape("circle")}>
+                      <CircleIcon className="h-4 w-4 mr-2" />
+                      Circle
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             <div style={{ position: "relative" }}>
@@ -819,23 +903,68 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                   )}
                   
                   {zones.map((zone) => (
-                    <Rect
-                      key={zone.id}
-                      id={zone.id}
-                      x={zone.x}
-                      y={zone.y}
-                      width={zone.width}
-                      height={zone.height}
-                      fill={zone.selected ? "rgba(242, 204, 59, 0.2)" : "rgba(255, 255, 255, 0.2)"}
-                      stroke={zone.selected ? "#f2cc3b" : "#ddd"}
-                      strokeWidth={2}
-                      dash={[5, 5]}
-                      draggable={canvasMode === "zone"}
-                      onClick={() => handleSelectZone(zone)}
-                      onTap={() => handleSelectZone(zone)}
-                      onDragEnd={handleZoneTransform}
-                      onTransformEnd={handleZoneTransform}
-                    />
+                    zone.shape === "circle" ? (
+                      <Circle
+                        key={zone.id}
+                        id={zone.id}
+                        x={zone.x + zone.width / 2}
+                        y={zone.y + zone.height / 2}
+                        radius={Math.min(zone.width, zone.height) / 2}
+                        fill={zone.selected ? "rgba(242, 204, 59, 0.2)" : "rgba(255, 255, 255, 0.2)"}
+                        stroke={zone.selected ? "#f2cc3b" : "#ddd"}
+                        strokeWidth={2}
+                        dash={[5, 5]}
+                        draggable={canvasMode === "zone"}
+                        onClick={() => handleSelectZone(zone)}
+                        onTap={() => handleSelectZone(zone)}
+                        onDragEnd={(e) => {
+                          // Update position for circle
+                          const radius = Math.min(zone.width, zone.height) / 2;
+                          handleUpdateZone(zone.id, {
+                            x: e.target.x() - radius,
+                            y: e.target.y() - radius
+                          });
+                        }}
+                        onTransformEnd={(e) => {
+                          const node = e.target;
+                          const scaleX = node.scaleX();
+                          const scaleY = node.scaleY();
+                          
+                          // Reset scale
+                          node.scaleX(1);
+                          node.scaleY(1);
+                          
+                          // Get new radius (average of width and height)
+                          const newRadius = node.radius() * Math.max(scaleX, scaleY);
+                          const newDiameter = newRadius * 2;
+                          
+                          handleUpdateZone(zone.id, {
+                            width: newDiameter,
+                            height: newDiameter,
+                            x: node.x() - newRadius,
+                            y: node.y() - newRadius
+                          });
+                        }}
+                      />
+                    ) : (
+                      <Rect
+                        key={zone.id}
+                        id={zone.id}
+                        x={zone.x}
+                        y={zone.y}
+                        width={zone.width}
+                        height={zone.height}
+                        fill={zone.selected ? "rgba(242, 204, 59, 0.2)" : "rgba(255, 255, 255, 0.2)"}
+                        stroke={zone.selected ? "#f2cc3b" : "#ddd"}
+                        strokeWidth={2}
+                        dash={[5, 5]}
+                        draggable={canvasMode === "zone"}
+                        onClick={() => handleSelectZone(zone)}
+                        onTap={() => handleSelectZone(zone)}
+                        onDragEnd={handleZoneTransform}
+                        onTransformEnd={handleZoneTransform}
+                      />
+                    )
                   ))}
                   
                   {logos.map((logo) => (
@@ -948,6 +1077,7 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                       }
                       return newBox;
                     }}
+                    rotateEnabled={canvasMode === "logo"}
                   />
                 </Layer>
               </Stage>
@@ -989,6 +1119,26 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                               {method}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Shape</label>
+                      <Select
+                        value={selectedZone.shape}
+                        onValueChange={(value: ZoneShape) => {
+                          handleUpdateZone(selectedZone.id, { shape: value });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select shape" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="rectangle">Rectangle</SelectItem>
+                          <SelectItem value="circle">Circle</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1070,10 +1220,21 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                       size="sm" 
                       className="w-full mt-2"
                       onClick={() => {
-                        toast({
-                          title: "Coming Soon",
-                          description: "Custom logo upload will be available soon.",
-                        });
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/png,image/jpeg,image/svg+xml';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const dataUrl = reader.result as string;
+                              handleAddLogo(selectedZone.id, dataUrl);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
                       }}
                     >
                       <ImageIcon className="h-4 w-4 mr-2" />
@@ -1088,6 +1249,138 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                   >
                     <Trash className="h-4 w-4 mr-2" />
                     Remove Zone
+                  </Button>
+                </div>
+              </div>
+            ) : selectedLogo ? (
+              <div className="space-y-4">
+                <h3 className="font-medium">Logo Properties</h3>
+                
+                <div className="space-y-3">
+                  <div className="border rounded-md p-2 bg-muted/20">
+                    <img 
+                      src={selectedLogo.url} 
+                      alt="Selected logo" 
+                      className="h-20 object-contain mx-auto"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Width (px)</label>
+                      <input
+                        type="number"
+                        min="10"
+                        value={Math.round(selectedLogo.width)}
+                        onChange={(e) => {
+                          const width = Math.max(10, Number(e.target.value));
+                          const newLogos = logos.map(l => 
+                            l.id === selectedLogo.id 
+                              ? { ...l, width } 
+                              : l
+                          );
+                          setLogos(newLogos);
+                        }}
+                        className="w-full rounded-md border px-3 py-1 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Height (px)</label>
+                      <input
+                        type="number"
+                        min="10"
+                        value={Math.round(selectedLogo.height)}
+                        onChange={(e) => {
+                          const height = Math.max(10, Number(e.target.value));
+                          const newLogos = logos.map(l => 
+                            l.id === selectedLogo.id 
+                              ? { ...l, height } 
+                              : l
+                          );
+                          setLogos(newLogos);
+                        }}
+                        className="w-full rounded-md border px-3 py-1 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">X Position</label>
+                      <input
+                        type="number"
+                        value={Math.round(selectedLogo.x)}
+                        onChange={(e) => {
+                          const x = Number(e.target.value);
+                          const newLogos = logos.map(l => 
+                            l.id === selectedLogo.id 
+                              ? { ...l, x } 
+                              : l
+                          );
+                          setLogos(newLogos);
+                        }}
+                        className="w-full rounded-md border px-3 py-1 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Y Position</label>
+                      <input
+                        type="number"
+                        value={Math.round(selectedLogo.y)}
+                        onChange={(e) => {
+                          const y = Number(e.target.value);
+                          const newLogos = logos.map(l => 
+                            l.id === selectedLogo.id 
+                              ? { ...l, y } 
+                              : l
+                          );
+                          setLogos(newLogos);
+                        }}
+                        className="w-full rounded-md border px-3 py-1 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs text-muted-foreground">Rotation (degrees)</label>
+                    <input
+                      type="number"
+                      value={Math.round(selectedLogo.rotation)}
+                      onChange={(e) => {
+                        const rotation = Number(e.target.value);
+                        const newLogos = logos.map(l => 
+                          l.id === selectedLogo.id 
+                            ? { ...l, rotation } 
+                            : l
+                        );
+                        setLogos(newLogos);
+                      }}
+                      className="w-full rounded-md border px-3 py-1 text-sm"
+                    />
+                  </div>
+                  
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => {
+                      const newLogos = logos.filter(l => l.id !== selectedLogo.id);
+                      setLogos(newLogos);
+                      setSelectedLogo(null);
+                      
+                      // Update current A/B test variant
+                      if (abTestingEnabled) {
+                        setAbTestVariants(prev => 
+                          prev.map(v => 
+                            v.id === currentVariant 
+                              ? { ...v, logos: newLogos } 
+                              : v
+                          )
+                        );
+                      }
+                    }}
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Remove Logo
                   </Button>
                 </div>
               </div>
@@ -1113,11 +1406,11 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                    A/B testing allows comparing different branding layouts
+                    Create both rectangular and circular branding zones
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                    Cross-listing enables shared products with custom branding
+                    Add multiple product images to create zones for each view
                   </li>
                 </ul>
                 
@@ -1153,46 +1446,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                     Generating Mockups...
                   </>
                 ) : (
-                  "Generate Branding Mockups"
+                  <>Generate Branding Mockups</>
                 )}
               </Button>
-              
-              {abTestingEnabled && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    // Simulate A/B test results
-                    const variantsWithPerformance = abTestVariants.map(v => ({
-                      ...v,
-                      performance: {
-                        views: Math.floor(Math.random() * 1000) + 100,
-                        clicks: Math.floor(Math.random() * 100) + 10,
-                        ctr: Math.random() * 10 + 1
-                      }
-                    }));
-                    
-                    setAbTestVariants(variantsWithPerformance);
-                    
-                    toast({
-                      title: "A/B Test Results",
-                      description: "Test results have been generated. The best performing variant is highlighted.",
-                    });
-                  }}
-                >
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  Analyze A/B Test Results
-                </Button>
-              )}
               
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={saveTemplate}
-                disabled={isLoading || zones.length === 0}
+                onClick={exportCanvasAsPng}
               >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Save as Template
+                <Download className="mr-2 h-4 w-4" />
+                Export Canvas as PNG
               </Button>
             </div>
           </div>
@@ -1224,7 +1488,17 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                         {zones.length} zone(s), {logos.length} logo(s)
                       </p>
                     </div>
-                    <Button size="sm">
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.download = `branding-mockup-${Date.now()}.png`;
+                        link.href = mockups[0];
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
@@ -1245,7 +1519,18 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                       </div>
                       <div className="p-2 border-t bg-gray-50 flex justify-between items-center">
                         <span className="text-sm font-medium">Mockup {index + 1}</span>
-                        <Button size="sm" variant="ghost">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.download = `branding-mockup-${Date.now()}-${index}.png`;
+                            link.href = mockup;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>

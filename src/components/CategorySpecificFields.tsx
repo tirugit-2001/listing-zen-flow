@@ -3,6 +3,7 @@ import React from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Checkbox } from "./ui/checkbox";
 import { Category } from "@/lib/schema";
 import { useFormContext } from "react-hook-form";
 
@@ -25,7 +26,7 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
               <FormLabel>Material</FormLabel>
               <Select
                 disabled={disabled}
-                value={field.value as string}
+                value={field.value}
                 onValueChange={field.onChange}
               >
                 <FormControl>
@@ -57,8 +58,8 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
                   type="number"
                   placeholder="Capacity in ml"
                   {...field}
-                  value={field.value as number}
                   onChange={(e) => field.onChange(Number(e.target.value))}
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />
@@ -74,7 +75,7 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
               <FormLabel>Insulation</FormLabel>
               <Select
                 disabled={disabled}
-                value={field.value as string}
+                value={field.value}
                 onValueChange={field.onChange}
               >
                 <FormControl>
@@ -109,7 +110,7 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
               <FormLabel>Material</FormLabel>
               <Select
                 disabled={disabled}
-                value={field.value as string}
+                value={field.value}
                 onValueChange={field.onChange}
               >
                 <FormControl>
@@ -130,7 +131,40 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
           )}
         />
         
-        {/* Size checkboxes would be implemented here */}
+        <FormField
+          control={form.control}
+          name="categorySpecific.size"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Available Sizes</FormLabel>
+              <div className="grid grid-cols-4 gap-2">
+                {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
+                  <FormItem
+                    key={size}
+                    className="flex flex-row items-center space-x-2 space-y-0"
+                  >
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value?.includes(size)}
+                        onCheckedChange={(checked) => {
+                          const updatedSizes = checked
+                            ? [...(field.value || []), size]
+                            : (field.value || []).filter((s: string) => s !== size);
+                          field.onChange(updatedSizes);
+                        }}
+                        disabled={disabled}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal">
+                      {size}
+                    </FormLabel>
+                  </FormItem>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     );
   }
@@ -146,7 +180,7 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
               <FormLabel>Cover Type</FormLabel>
               <Select
                 disabled={disabled}
-                value={field.value as string}
+                value={field.value}
                 onValueChange={field.onChange}
               >
                 <FormControl>
@@ -178,8 +212,8 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
                   type="number"
                   placeholder="Number of pages"
                   {...field}
-                  value={field.value as number}
                   onChange={(e) => field.onChange(Number(e.target.value))}
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />
@@ -190,5 +224,9 @@ export function CategorySpecificFields({ category, disabled = false }: CategoryS
     );
   }
   
-  return <div>No specific fields for this category</div>;
+  return (
+    <div className="p-4 border rounded-md bg-muted/20 text-center text-muted-foreground">
+      No specific fields for this category
+    </div>
+  );
 }
