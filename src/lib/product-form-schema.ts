@@ -1,10 +1,9 @@
-
 import { z } from "zod";
 import { Category, categories, subcategories, brandingMethods, gstRates } from "./schema";
 
 // Define the BrandingZone interface to be used in the form
 export interface BrandingZone {
-  id: string; // Added required id field
+  id: string;
   label: string;
   x: number;
   y: number;
@@ -68,7 +67,7 @@ export const brandingSchema = z.object({
   brandingMethods: z.array(z.string()).optional(),
   brandingZones: z.array(
     z.object({
-      id: z.string(), // Add required id field
+      id: z.string(),
       label: z.string(),
       x: z.number(),
       y: z.number(),
@@ -122,7 +121,6 @@ export const getDynamicCategorySchema = (category: Category) => {
       return apparelSchema;
     case "diaries":
       return diariesSchema;
-    // Add other categories as needed
     default:
       return z.object({});
   }
@@ -130,18 +128,17 @@ export const getDynamicCategorySchema = (category: Category) => {
 
 // Full product schema (combines all schemas)
 export const getFullProductSchema = (category: Category) => {
-  return z.object({
-    ...baseProductSchema.shape,
-    ...pricingSchema.shape,
-    ...brandingSchema.shape,
-    ...packagingSchema.shape,
-    ...crossListingSchema.shape,
-    ...certificationSchema.shape,
-    categorySpecific: getDynamicCategorySchema(category),
+  return baseProductSchema.merge(pricingSchema).merge(brandingSchema).merge(packagingSchema).merge(crossListingSchema).merge(certificationSchema).extend({
+    categorySpecific: getDynamicCategorySchema(category)
   });
 };
 
 export type ProductFormValues = z.infer<ReturnType<typeof getFullProductSchema>>;
+
+// Define nested types for categorySpecific fields for easier use with form
+export type BottlesFormValues = z.infer<typeof bottlesSchema>;
+export type ApparelFormValues = z.infer<typeof apparelSchema>;
+export type DiariesFormValues = z.infer<typeof diariesSchema>;
 
 // Helper to get initial values based on category
 export const getInitialValues = (category: Category): Partial<ProductFormValues> => {
