@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +24,12 @@ type ValidationError = {
   message: string;
 };
 
-export default function BulkImport() {
+// Update the component to accept onClose prop
+interface BulkImportProps {
+  onClose?: () => void;
+}
+
+export default function BulkImport({ onClose }: BulkImportProps) {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -158,6 +162,11 @@ export default function BulkImport() {
         title: "Import successful",
         description: `${data.length} products have been imported`
       });
+      
+      // Call onClose if provided
+      if (onClose) {
+        onClose();
+      }
       
       // Reset form
       setFile(null);
@@ -372,7 +381,7 @@ export default function BulkImport() {
                 <Separator />
                 
                 <div className="max-h-60 overflow-y-auto">
-                  {/* Fix: Converting Record to array of entries before mapping */}
+                  {/* Converting Record to array of entries before mapping */}
                   {Object.entries(validationErrors.reduce((acc: Record<number, ValidationError[]>, error) => {
                     if (!acc[error.row]) {
                       acc[error.row] = [];
