@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Transformer } from "react-konva";
 import { useToast } from "@/hooks/use-toast";
@@ -935,7 +934,9 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
                           node.scaleY(1);
                           
                           // Get new radius (average of width and height)
-                          const newRadius = node.radius() * Math.max(scaleX, scaleY);
+                          // Type cast node to access the radius property
+                          const circleNode = node as Konva.Circle;
+                          const newRadius = circleNode.radius() * Math.max(scaleX, scaleY);
                           const newDiameter = newRadius * 2;
                           
                           handleUpdateZone(zone.id, {
