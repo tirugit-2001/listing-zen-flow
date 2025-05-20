@@ -1,5 +1,7 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Transformer } from "react-konva";
+import Konva from "konva"; // Add this import for the Konva namespace
 import { useToast } from "@/hooks/use-toast";
 import { mockApi } from "@/lib/mock-api";
 import { Category } from "@/lib/schema";
