@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -57,6 +57,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Define resetSessionTimer function first as a useCallback
+  const resetSessionTimer = useCallback(() => {
+    if (sessionTimer) clearTimeout(sessionTimer);
+    
+    const newTimer = setTimeout(() => {
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired due to inactivity. Please sign in again.",
+        variant: "destructive",
+      });
+      logout();
+    }, SESSION_TIMEOUT);
+    
+    setSessionTimer(newTimer);
+  }, [sessionTimer]);
+
+  // Define logout function
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
+    if (sessionTimer) clearTimeout(sessionTimer);
+    navigate("/login");
+  };
+
   // Handle session timeout
   useEffect(() => {
     if (isAuthenticated) {
@@ -65,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if (sessionTimer) clearTimeout(sessionTimer);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, resetSessionTimer, sessionTimer]);
 
   // Add event listeners for user activity
   useEffect(() => {
@@ -84,21 +110,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     }
   }, [isAuthenticated, resetSessionTimer]);
-
-  const resetSessionTimer = () => {
-    if (sessionTimer) clearTimeout(sessionTimer);
-    
-    const newTimer = setTimeout(() => {
-      toast({
-        title: "Session Expired",
-        description: "Your session has expired due to inactivity. Please sign in again.",
-        variant: "destructive",
-      });
-      logout();
-    }, SESSION_TIMEOUT);
-    
-    setSessionTimer(newTimer);
-  };
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     // This would normally be an API call
@@ -134,15 +145,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return false;
     }
-  };
-
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
-    if (sessionTimer) clearTimeout(sessionTimer);
-    navigate("/login");
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
