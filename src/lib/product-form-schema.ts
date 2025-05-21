@@ -10,11 +10,11 @@ export interface BrandingZone {
   width: number;
   height: number;
   method: string;
-  shape: "rectangle" | "circle"; // Added shape property
+  shape: "rectangle" | "circle"; // Required shape property
   logoFile?: string;
   brandedMockupUrl?: string;
   appliedOn?: string;
-  isCrossListing?: boolean; // Added cross-listing flag
+  isCrossListing?: boolean; // Cross-listing flag
 }
 
 // Define category-specific schemas

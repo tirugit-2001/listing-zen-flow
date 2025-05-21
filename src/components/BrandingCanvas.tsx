@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Transformer } from "react-konva";
 import Konva from "konva"; // Add this import for the Konva namespace
@@ -39,10 +38,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { BrandingZone } from "@/lib/product-form-schema";
 
 type BrandingCanvasProps = {
   category?: Category;
   initialImage?: string;
+  isCrossListing?: boolean;
+  isTemplateMode?: boolean;
+  onSaveZones?: (zones: BrandingZone[]) => void;
 };
 
 type ZoneShape = "rectangle" | "circle";
@@ -99,7 +102,13 @@ type CrossListingProfile = {
 
 const brandingMethods = ["UV Print", "Screen", "Embroidery", "Sticker", "Foil", "Laser", "Digital Print", "Pad Print"];
 
-export default function BrandingCanvas({ category = "bottles", initialImage }: BrandingCanvasProps) {
+export default function BrandingCanvas({ 
+  category = "bottles", 
+  initialImage,
+  isCrossListing = false,
+  isTemplateMode = false,
+  onSaveZones
+}: BrandingCanvasProps) {
   const { toast } = useToast();
   const stageRef = useRef<any>(null);
   const transformerRef = useRef<any>(null);
@@ -567,6 +576,35 @@ export default function BrandingCanvas({ category = "bottles", initialImage }: B
       }
     }
   }, [selectedZone, selectedLogo]);
+
+  // Convert internal zones format to BrandingZones format for saving
+  const convertZonesToBrandingZones = (): BrandingZone[] => {
+    return zones.map(zone => {
+      const logo = logos.find(l => l.zoneId === zone.id);
+      return {
+        id: zone.id,
+        label: zone.label,
+        x: zone.x,
+        y: zone.y,
+        width: zone.width,
+        height: zone.height,
+        method: zone.method,
+        shape: zone.shape,
+        logoFile: logo?.url,
+        brandedMockupUrl: mockups.length > 0 ? mockups[0] : undefined,
+        appliedOn: productImages[currentImageIndex],
+        isCrossListing: isCrossListing
+      };
+    });
+  };
+
+  // Save the zones when requested
+  useEffect(() => {
+    if (onSaveZones) {
+      const brandingZones = convertZonesToBrandingZones();
+      onSaveZones(brandingZones);
+    }
+  }, [zones, logos, mockups, isCrossListing, productImages, currentImageIndex, onSaveZones]);
 
   return (
     <Card className="max-w-full">
