@@ -12,19 +12,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
+// Updated interface to match the structure in VendorOnboardingPage
 interface BusinessData {
   businessName: string;
   businessType: string;
   registrationNumber: string;
   yearEstablished: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  website: string;
+  address?: string | {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
+  contactPerson?: string | {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  website?: string;
+  gstNumber?: string;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -40,19 +52,42 @@ export default function BusinessDetailsForm({ data, onUpdate }: BusinessDetailsF
       businessType: data.businessType || "",
       registrationNumber: data.registrationNumber || "",
       yearEstablished: data.yearEstablished || "",
-      contactPerson: data.contactPerson?.name || data.contactPerson || "",
-      email: data.contactPerson?.email || data.email || "",
-      phone: data.contactPerson?.phone || data.phone || "",
-      address: data.address?.street || data.address || "",
-      city: data.address?.city || data.city || "",
-      state: data.address?.state || data.state || "",
-      pincode: data.address?.postalCode || data.pincode || "",
-      website: data.website || ""
+      contactPerson: typeof data.contactPerson === 'object' ? data.contactPerson.name : (data.contactPerson || ""),
+      email: typeof data.contactPerson === 'object' ? data.contactPerson.email : (data.email || ""),
+      phone: typeof data.contactPerson === 'object' ? data.contactPerson.phone : (data.phone || ""),
+      address: typeof data.address === 'object' ? data.address.street : (data.address || ""),
+      city: typeof data.address === 'object' ? data.address.city : (data.city || ""),
+      state: typeof data.address === 'object' ? data.address.state : (data.state || ""),
+      pincode: typeof data.address === 'object' ? data.address.postalCode : (data.pincode || ""),
+      website: data.website || "",
+      gstNumber: data.gstNumber || ""
     }
   });
   
-  const onSubmit = (values: BusinessData) => {
-    onUpdate(values);
+  const onSubmit = (values: any) => {
+    // Transform form values back into the expected structure
+    const formattedData: BusinessData = {
+      businessName: values.businessName,
+      businessType: values.businessType,
+      registrationNumber: values.registrationNumber,
+      yearEstablished: values.yearEstablished,
+      contactPerson: {
+        name: values.contactPerson,
+        email: values.email,
+        phone: values.phone
+      },
+      address: {
+        street: values.address,
+        city: values.city,
+        state: values.state,
+        postalCode: values.pincode,
+        country: "India" // Default country
+      },
+      website: values.website,
+      gstNumber: values.gstNumber
+    };
+
+    onUpdate(formattedData);
   };
 
   return (
@@ -286,6 +321,24 @@ export default function BusinessDetailsForm({ data, onUpdate }: BusinessDetailsF
                   <FormLabel>Pincode</FormLabel>
                   <FormControl>
                     <Input placeholder="6-digit pincode" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <FormField
+              control={form.control}
+              name="gstNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GST Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="GST Registration Number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

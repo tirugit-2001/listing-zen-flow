@@ -56,8 +56,48 @@ const progressSteps = [
   },
 ];
 
+// Define types to match component interfaces
+interface BusinessDataType {
+  businessName: string;
+  businessType: string;
+  registrationNumber: string;
+  yearEstablished: string;
+  gstNumber: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
+  contactPerson: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+}
+
+interface DocumentDataType {
+  gstCertificate: null | string;
+  panCard: null | string;
+  businessRegistration: null | string;
+  cancelledCheque: null | string;
+  addressProof: null | string;
+  signatureProof: null | string;
+}
+
+interface BankDataType {
+  accountName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  bankBranch?: string;
+  branchName?: string;
+  accountType: string;
+}
+
 // Mock business data
-const initialBusinessData = {
+const initialBusinessData: BusinessDataType = {
   businessName: "Mutations Design",
   businessType: "Private Limited",
   registrationNumber: "ABCDE12345",
@@ -78,7 +118,7 @@ const initialBusinessData = {
 };
 
 // Mock document data (empty initially)
-const initialDocumentData = {
+const initialDocumentData: DocumentDataType = {
   gstCertificate: null,
   panCard: null,
   businessRegistration: null,
@@ -88,7 +128,7 @@ const initialDocumentData = {
 };
 
 // Mock bank data
-const initialBankData = {
+const initialBankData: BankDataType = {
   accountName: "Mutations Design Pvt Ltd",
   accountNumber: "1234567890",
   ifscCode: "ABCD0001234",
@@ -196,7 +236,7 @@ export default function VendorOnboardingPage() {
                       <BusinessDetailsForm 
                         data={businessData}
                         onUpdate={(data) => {
-                          setBusinessData(data);
+                          setBusinessData(data as any);
                           handleNext();
                         }}
                       />
@@ -216,7 +256,7 @@ export default function VendorOnboardingPage() {
                       <BankDetailsForm 
                         data={bankData}
                         onUpdate={(data) => {
-                          setBankData(data);
+                          setBankData(data as any);
                           handleNext();
                         }}
                       />
