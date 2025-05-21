@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
@@ -617,7 +616,7 @@ export default function AudienceSegmentsPage() {
                     
                     <div className="bg-muted p-3 rounded-lg">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">Bulk Orders (>10 items)</span>
+                        <span className="font-medium">Bulk Orders ({'>'}10 items)</span>
                         <span>18%</span>
                       </div>
                       <div className="text-sm text-muted-foreground">+3% vs previous period</div>
@@ -1103,4 +1102,3 @@ export default function AudienceSegmentsPage() {
     </Layout>
   );
 }
-
