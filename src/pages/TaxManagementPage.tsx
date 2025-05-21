@@ -10,7 +10,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Upload, FileText, AlertCircle, CheckCircle, Search, Filter, Plus } from "lucide-react";
+import { Download, Upload, FileText, AlertCircle, CheckCircle, Search, Filter, Plus, FileEdit } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -172,6 +172,15 @@ export default function TaxManagementPage() {
       title: "GST Filing Initiated",
       description: "Your GST filing process has been started. You'll be notified when it's ready for review.",
     });
+  };
+
+  // Calculate days until due date (with type check)
+  const getDaysUntilDue = (dueDate) => {
+    const due = new Date(dueDate);
+    const today = new Date();
+    const differenceInTime = due.getTime() - today.getTime();
+    const differenceInDays = Math.ceil(differenceInTime / (1000 * 60 * 60 * 24));
+    return differenceInDays;
   };
 
   return (
@@ -372,7 +381,7 @@ export default function TaxManagementPage() {
                             </Badge>
                           ) : (
                             <Badge className="bg-amber-100 text-amber-800">
-                              Due in {Math.ceil((new Date(filing.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} days
+                              Due in {getDaysUntilDue(filing.dueDate)} days
                             </Badge>
                           )}
                         </TableCell>
@@ -457,7 +466,7 @@ export default function TaxManagementPage() {
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="ml-auto">
-                    <Edit className="mr-2 h-4 w-4" />
+                    <FileEdit className="mr-2 h-4 w-4" />
                     Edit Details
                   </Button>
                 </CardFooter>
