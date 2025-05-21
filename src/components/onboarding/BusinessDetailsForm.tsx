@@ -13,31 +13,25 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
 // Updated interface to match the structure in VendorOnboardingPage
-interface BusinessData {
+export interface BusinessData {
   businessName: string;
   businessType: string;
   registrationNumber: string;
   yearEstablished: string;
-  address?: string | {
+  gstNumber?: string;
+  address?: {
     street: string;
     city: string;
     state: string;
     country: string;
     postalCode: string;
   };
-  contactPerson?: string | {
+  contactPerson?: {
     name: string;
     email: string;
     phone: string;
   };
-  email?: string;
-  phone?: string;
-  city?: string;
-  state?: string;
-  pincode?: string;
   website?: string;
-  gstNumber?: string;
-  [key: string]: any; // Allow for additional properties
 }
 
 export interface BusinessDetailsFormProps {
@@ -46,19 +40,20 @@ export interface BusinessDetailsFormProps {
 }
 
 export default function BusinessDetailsForm({ data, onUpdate }: BusinessDetailsFormProps) {
+  // Extract nested values safely with nullish coalescing
   const form = useForm({
     defaultValues: {
       businessName: data.businessName || "",
       businessType: data.businessType || "",
       registrationNumber: data.registrationNumber || "",
       yearEstablished: data.yearEstablished || "",
-      contactPerson: typeof data.contactPerson === 'object' ? data.contactPerson.name : (data.contactPerson || ""),
-      email: typeof data.contactPerson === 'object' ? data.contactPerson.email : (data.email || ""),
-      phone: typeof data.contactPerson === 'object' ? data.contactPerson.phone : (data.phone || ""),
-      address: typeof data.address === 'object' ? data.address.street : (data.address || ""),
-      city: typeof data.address === 'object' ? data.address.city : (data.city || ""),
-      state: typeof data.address === 'object' ? data.address.state : (data.state || ""),
-      pincode: typeof data.address === 'object' ? data.address.postalCode : (data.pincode || ""),
+      contactPerson: data.contactPerson ? data.contactPerson.name : "",
+      email: data.contactPerson ? data.contactPerson.email : "",
+      phone: data.contactPerson ? data.contactPerson.phone : "",
+      address: data.address ? data.address.street : "",
+      city: data.address ? data.address.city : "",
+      state: data.address ? data.address.state : "",
+      pincode: data.address ? data.address.postalCode : "",
       website: data.website || "",
       gstNumber: data.gstNumber || ""
     }

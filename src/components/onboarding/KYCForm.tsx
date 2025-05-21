@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
-interface KYCData {
+export interface KYCData {
   gstin: string;
   pan: string;
   gstRegistrationType: string;
@@ -21,7 +21,7 @@ interface KYCData {
   tradeName: string;
 }
 
-interface KYCFormProps {
+export interface KYCFormProps {
   data: KYCData;
   onUpdate: (data: KYCData) => void;
 }

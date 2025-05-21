@@ -1,30 +1,17 @@
-import { useState } from "react";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Upload, CheckCircle } from "lucide-react";
+import React from 'react';
 
-interface DocumentData {
-  gstCertificate: any;
-  panCard: any;
-  businessRegistration: any;
-  cancelledCheque: any;
-  addressProof: any;
-  signatureProof: any;
+export interface DocumentDataType {
+  gstCertificate: null | string;
+  panCard: null | string;
+  businessRegistration: null | string;
+  cancelledCheque: null | string;
+  addressProof: null | string;
+  signatureProof: null | string;
 }
 
 export interface DocumentVerificationFormProps {
-  data: DocumentData;
-  onUpdate: (data: DocumentData) => void;
+  data: DocumentDataType;
+  onUpdate: (data: DocumentDataType) => void;
 }
 
 export default function DocumentVerificationForm({ data, onUpdate }: DocumentVerificationFormProps) {

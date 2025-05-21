@@ -1,15 +1,14 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
 import { Stepper } from "@/components/onboarding/Stepper";
-import KYCForm from "@/components/onboarding/KYCForm";
-import BusinessDetailsForm from "@/components/onboarding/BusinessDetailsForm";
-import DocumentVerificationForm from "@/components/onboarding/DocumentVerificationForm";
-import BankDetailsForm from "@/components/onboarding/BankDetailsForm";
-import AdminKYCDashboard from "@/components/onboarding/AdminKYCDashboard";
+import KYCForm, { KYCData } from "@/components/onboarding/KYCForm";
+import BusinessDetailsForm, { BusinessData } from "@/components/onboarding/BusinessDetailsForm";
+import DocumentVerificationForm, { DocumentDataType } from "@/components/onboarding/DocumentVerificationForm";
+import BankDetailsForm, { BankData } from "@/components/onboarding/BankDetailsForm";
+import AdminKYCDashboard, { PendingVerification } from "@/components/onboarding/AdminKYCDashboard";
 import { Clock } from "lucide-react";
 
 // Define onboarding steps
@@ -56,48 +55,8 @@ const progressSteps = [
   },
 ];
 
-// Define types to match component interfaces
-interface BusinessDataType {
-  businessName: string;
-  businessType: string;
-  registrationNumber: string;
-  yearEstablished: string;
-  gstNumber: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-  };
-  contactPerson: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-}
-
-interface DocumentDataType {
-  gstCertificate: null | string;
-  panCard: null | string;
-  businessRegistration: null | string;
-  cancelledCheque: null | string;
-  addressProof: null | string;
-  signatureProof: null | string;
-}
-
-interface BankDataType {
-  accountName: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-  bankBranch?: string;
-  branchName?: string;
-  accountType: string;
-}
-
 // Mock business data
-const initialBusinessData: BusinessDataType = {
+const initialBusinessData: BusinessData = {
   businessName: "Mutations Design",
   businessType: "Private Limited",
   registrationNumber: "ABCDE12345",
@@ -128,7 +87,7 @@ const initialDocumentData: DocumentDataType = {
 };
 
 // Mock bank data
-const initialBankData: BankDataType = {
+const initialBankData: BankData = {
   accountName: "Mutations Design Pvt Ltd",
   accountNumber: "1234567890",
   ifscCode: "ABCD0001234",
@@ -138,7 +97,7 @@ const initialBankData: BankDataType = {
 };
 
 // Mock pending verifications for AdminKYCDashboard
-const pendingVerifications = [
+const pendingVerifications: PendingVerification[] = [
   {
     id: "vendor-001",
     businessName: "EcoGoods Trading",
@@ -165,11 +124,21 @@ const pendingVerifications = [
   }
 ];
 
+// Mock kyc data
+const initialKycData: KYCData = {
+  gstin: "",
+  pan: "",
+  gstRegistrationType: "",
+  legalName: "",
+  tradeName: ""
+};
+
 export default function VendorOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [businessData, setBusinessData] = useState(initialBusinessData);
-  const [documentData, setDocumentData] = useState(initialDocumentData);
-  const [bankData, setBankData] = useState(initialBankData);
+  const [businessData, setBusinessData] = useState<BusinessData>(initialBusinessData);
+  const [documentData, setDocumentData] = useState<DocumentDataType>(initialDocumentData);
+  const [bankData, setBankData] = useState<BankData>(initialBankData);
+  const [kycData, setKycData] = useState<KYCData>(initialKycData);
   const [viewMode, setViewMode] = useState<"vendor" | "admin">("vendor");
   
   const handleNext = () => {
@@ -236,7 +205,7 @@ export default function VendorOnboardingPage() {
                       <BusinessDetailsForm 
                         data={businessData}
                         onUpdate={(data) => {
-                          setBusinessData(data as any);
+                          setBusinessData(data);
                           handleNext();
                         }}
                       />
@@ -256,7 +225,7 @@ export default function VendorOnboardingPage() {
                       <BankDetailsForm 
                         data={bankData}
                         onUpdate={(data) => {
-                          setBankData(data as any);
+                          setBankData(data);
                           handleNext();
                         }}
                       />

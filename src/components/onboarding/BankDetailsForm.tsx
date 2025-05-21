@@ -1,3 +1,4 @@
+
 import { 
   Form,
   FormField, 
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
-interface BankData {
+export interface BankData {
   accountName: string;
   accountNumber: string;
   ifscCode: string;
@@ -23,7 +24,7 @@ interface BankData {
   [key: string]: any; // Allow for additional properties
 }
 
-interface BankDetailsFormProps {
+export interface BankDetailsFormProps {
   data: BankData;
   onUpdate: (data: BankData) => void;
 }
