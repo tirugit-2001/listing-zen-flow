@@ -16,6 +16,9 @@ import ReturnGiftDetailPage from "./pages/ReturnGiftDetailPage";
 import ReturnGiftBatchPage from "./pages/ReturnGiftBatchPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import MarketingPage from "./pages/MarketingPage";
+import CampaignDetailPage from "./pages/CampaignDetailPage";
+import AudienceSegmentsPage from "./pages/AudienceSegmentsPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +41,9 @@ const App = () => (
           <Route path="/return-gifts/batch" element={<ReturnGiftBatchPage />} />
           <Route path="/account-settings" element={<AccountSettingsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/marketing" element={<MarketingPage />} />
+          <Route path="/marketing/campaigns/:id" element={<CampaignDetailPage />} />
+          <Route path="/marketing/audience-segments" element={<AudienceSegmentsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

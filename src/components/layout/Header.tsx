@@ -2,7 +2,19 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Upload, Bell, Settings, HelpCircle, User } from "lucide-react";
+import { 
+  Package, 
+  Upload, 
+  Bell, 
+  Settings, 
+  HelpCircle, 
+  User, 
+  Search, 
+  Globe, 
+  MessageSquare, 
+  TrendingUp, 
+  BarChart
+} from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -30,14 +42,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import BulkImport from "@/components/product/BulkImport";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 
 export default function Header() {
   const { toast } = useToast();
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   
   // Helper to check if a path is active
   const isActive = (path: string) => location.pathname === path;
+  const isActiveParent = (path: string) => location.pathname.startsWith(path);
 
   return (
     <header className="border-b shadow-sm sticky top-0 bg-background z-10">
@@ -53,7 +74,9 @@ export default function Header() {
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={isActiveParent('/products') || isActiveParent('/add-product') || isActiveParent('/branding-canvas') ? 'text-primary font-medium' : ''}>
+                  Products
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 w-[220px]">
                     <li>
@@ -91,7 +114,9 @@ export default function Header() {
               </NavigationMenuItem>
               
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Orders</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={isActive('/orders') || isActive('/proposals') ? 'text-primary font-medium' : ''}>
+                  Orders
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 w-[220px]">
                     <li>
@@ -120,10 +145,40 @@ export default function Header() {
               
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link to="/return-gifts" className={isActive('/return-gifts') ? 'text-primary font-medium' : ''}>
+                  <Link to="/return-gifts" className={isActiveParent('/return-gifts') ? 'text-primary font-medium' : ''}>
                     Return Gifts
                   </Link>
                 </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={isActiveParent('/marketing') ? 'text-primary font-medium' : ''}>
+                  Marketing
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid gap-3 p-4 w-[280px]">
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link to="/marketing" className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors ${isActive('/marketing') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}>
+                          <div className="text-sm font-medium">Campaign Dashboard</div>
+                          <div className="line-clamp-2 text-sm text-muted-foreground">
+                            Manage all your marketing campaigns
+                          </div>
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link to="/marketing/audience-segments" className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors ${isActive('/marketing/audience-segments') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}>
+                          <div className="text-sm font-medium">Audience Segments</div>
+                          <div className="line-clamp-2 text-sm text-muted-foreground">
+                            Create and manage customer segments
+                          </div>
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
+                  </ul>
+                </NavigationMenuContent>
               </NavigationMenuItem>
               
               <NavigationMenuItem>
@@ -138,31 +193,101 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => toast({
-              title: "Notifications",
-              description: "You have no new notifications",
-            })}
-          >
-            <Bell className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setShowSearch(!showSearch)}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Global Search</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
-          <Button 
-            variant="outline" 
-            onClick={() => setShowBulkImport(true)}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Import
-          </Button>
+          {showSearch && (
+            <div className="absolute top-16 right-4 mt-1 bg-background border rounded-md shadow-lg p-3 w-80 z-50">
+              <Input 
+                placeholder="Search products, orders, campaigns..." 
+                className="w-full"
+                autoFocus
+              />
+            </div>
+          )}
           
-          <Button 
-            variant="outline"
-            size="icon"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => toast({
+                    title: "Notifications",
+                    description: "You have no new notifications",
+                  })}
+                >
+                  <Bell className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Notifications</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowBulkImport(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Import
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Import multiple products at once</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline"
+                  size="icon"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Help & Resources</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline"
+                  size="icon"
+                >
+                  <Globe className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Switch Platform</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
