@@ -8,9 +8,11 @@ import DistributorBrandsList from "@/components/authorization/DistributorBrandsL
 import CrossListingProducts from "@/components/authorization/CrossListingProducts";
 import AuthorizationRequests from "@/components/authorization/AuthorizationRequests";
 import { Building2, Users, PackageCheck, ClipboardCheck, Link } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DistributorAuthorizationPage() {
   const [userRole] = useState<"brand" | "distributor">("brand");
+  const isMobile = useIsMobile();
   
   return (
     <Layout>
@@ -23,7 +25,7 @@ export default function DistributorAuthorizationPage() {
         </div>
         
         <Tabs defaultValue={userRole === "brand" ? "my-distributors" : "authorized-brands"} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-3xl">
+          <TabsList className={`grid grid-cols-${isMobile ? "2" : "4"} w-full max-w-3xl`}>
             {userRole === "brand" ? (
               <>
                 <TabsTrigger value="my-distributors" className="flex items-center gap-2">
@@ -47,15 +49,73 @@ export default function DistributorAuthorizationPage() {
                 </TabsTrigger>
               </>
             )}
-            <TabsTrigger value="cross-listing" className="flex items-center gap-2">
-              <Link className="h-4 w-4" />
-              <span className="hidden sm:inline">Cross-Listing</span>
-            </TabsTrigger>
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <PackageCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Products</span>
-            </TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="cross-listing" className="flex items-center gap-2">
+                  <Link className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cross-Listing</span>
+                </TabsTrigger>
+                <TabsTrigger value="products" className="flex items-center gap-2">
+                  <PackageCheck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Products</span>
+                </TabsTrigger>
+              </>
+            )}
+            {isMobile && (
+              <TabsTrigger value="more" className="flex items-center gap-2 col-span-2">
+                More
+              </TabsTrigger>
+            )}
           </TabsList>
+          
+          {isMobile && (
+            <TabsContent value="more">
+              <Tabs defaultValue="cross-listing" className="space-y-4">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="cross-listing" className="flex items-center gap-2">
+                    <Link className="h-4 w-4" />
+                    Cross-Listing
+                  </TabsTrigger>
+                  <TabsTrigger value="products" className="flex items-center gap-2">
+                    <PackageCheck className="h-4 w-4" />
+                    Products
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="cross-listing">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Cross-List Products</CardTitle>
+                      <CardDescription>
+                        {userRole === "brand" 
+                          ? "Manage which products distributors can cross-list" 
+                          : "Cross-list products from brands that have authorized you"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <CrossListingProducts userRole={userRole} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="products">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Authorized Products</CardTitle>
+                      <CardDescription>
+                        {userRole === "brand" 
+                          ? "Products that are available for distributors to cross-list"
+                          : "Products you are authorized to sell from various brands"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Product list will be displayed here...</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+          )}
           
           {userRole === "brand" ? (
             <>
@@ -119,37 +179,41 @@ export default function DistributorAuthorizationPage() {
             </>
           )}
           
-          <TabsContent value="cross-listing">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cross-List Products</CardTitle>
-                <CardDescription>
-                  {userRole === "brand" 
-                    ? "Manage which products distributors can cross-list" 
-                    : "Cross-list products from brands that have authorized you"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CrossListingProducts userRole={userRole} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Authorized Products</CardTitle>
-                <CardDescription>
-                  {userRole === "brand" 
-                    ? "Products that are available for distributors to cross-list"
-                    : "Products you are authorized to sell from various brands"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Product list will be displayed here...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {!isMobile && (
+            <>
+              <TabsContent value="cross-listing">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cross-List Products</CardTitle>
+                    <CardDescription>
+                      {userRole === "brand" 
+                        ? "Manage which products distributors can cross-list" 
+                        : "Cross-list products from brands that have authorized you"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CrossListingProducts userRole={userRole} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="products">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Authorized Products</CardTitle>
+                    <CardDescription>
+                      {userRole === "brand" 
+                        ? "Products that are available for distributors to cross-list"
+                        : "Products you are authorized to sell from various brands"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Product list will be displayed here...</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </Layout>

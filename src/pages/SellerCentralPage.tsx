@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -24,11 +23,14 @@ import {
   BadgePercent,
   BadgeDollarSign,
   Building2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CreditCard
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function SellerCentralPage() {
   const [platformMode, setPlatformMode] = useState<"wyshkit" | "basecamp">("wyshkit");
+  const isMobile = useIsMobile();
 
   // Mock data for charts
   const performance = {
@@ -36,7 +38,8 @@ export default function SellerCentralPage() {
     pendingOrders: 7,
     proposals: 12,
     returnGiftOrders: 3,
-    inventory: 42
+    inventory: 42,
+    sampleOrders: 3
   };
 
   return (
@@ -60,7 +63,7 @@ export default function SellerCentralPage() {
           <Tabs 
             value={platformMode} 
             onValueChange={(value) => setPlatformMode(value as "wyshkit" | "basecamp")}
-            className="w-[300px] sm:w-[400px]"
+            className={isMobile ? "w-full" : "w-[300px] sm:w-[400px]"}
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="wyshkit">WyshKit</TabsTrigger>
@@ -148,9 +151,16 @@ export default function SellerCentralPage() {
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/branding-canvas">
-                    <FileText className="h-6 w-6 mb-1" />
-                    <span>Branding Canvas</span>
+                  <Link to="/orders">
+                    <ShoppingCart className="h-6 w-6 mb-1" />
+                    <span>Orders ({performance.pendingOrders})</span>
+                  </Link>
+                </Button>
+                
+                <Button asChild variant="outline" className="h-24 flex flex-col">
+                  <Link to="/sample-orders">
+                    <PackageIcon className="h-6 w-6 mb-1" />
+                    <span>Samples ({performance.sampleOrders})</span>
                   </Link>
                 </Button>
                 
@@ -162,23 +172,16 @@ export default function SellerCentralPage() {
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/orders">
-                    <ShoppingCart className="h-6 w-6 mb-1" />
-                    <span>Orders ({performance.pendingOrders})</span>
+                  <Link to="/order-financing">
+                    <CreditCard className="h-6 w-6 mb-1" />
+                    <span>Financing</span>
                   </Link>
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/tax-management">
-                    <BadgeDollarSign className="h-6 w-6 mb-1" />
-                    <span>Tax Management</span>
-                  </Link>
-                </Button>
-                
-                <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/offers-and-promotions">
-                    <BadgePercent className="h-6 w-6 mb-1" />
-                    <span>Offers & Promotions</span>
+                  <Link to="/branding-canvas">
+                    <FileText className="h-6 w-6 mb-1" />
+                    <span>Branding</span>
                   </Link>
                 </Button>
               </div>
@@ -270,11 +273,17 @@ export default function SellerCentralPage() {
                 ))}
               </div>
             </CardContent>
-            <CardFooter>
-              <Button asChild variant="outline" className="w-full">
+            <CardFooter className="grid grid-cols-2 gap-2">
+              <Button asChild variant="outline">
                 <Link to="/orders">
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  View All Orders
+                  All Orders
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/sample-orders">
+                  <PackageIcon className="h-4 w-4 mr-2" />
+                  Sample Orders
                 </Link>
               </Button>
             </CardFooter>
@@ -359,14 +368,14 @@ export default function SellerCentralPage() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
-                      <CheckCircle className="h-5 w-5" />
+                      <PackageIcon className="h-5 w-5" />
                     </div>
-                    <h3 className="text-sm font-medium mb-2">Vendor Onboarding</h3>
+                    <h3 className="text-sm font-medium mb-2">Sample Orders</h3>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Quick KYC verification and automated document checks
+                      Request product samples before placing bulk orders
                     </p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/vendor-onboarding">
+                      <Link to="/sample-orders">
                         Explore
                       </Link>
                     </Button>
@@ -378,14 +387,14 @@ export default function SellerCentralPage() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
-                      <BadgeDollarSign className="h-5 w-5" />
+                      <CreditCard className="h-5 w-5" />
                     </div>
-                    <h3 className="text-sm font-medium mb-2">Tax Management</h3>
+                    <h3 className="text-sm font-medium mb-2">Order Financing</h3>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Simplified GST filing and tax compliance tools
+                      Access working capital and inventory financing with AI-powered approvals
                     </p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/tax-management">
+                      <Link to="/order-financing">
                         Explore
                       </Link>
                     </Button>

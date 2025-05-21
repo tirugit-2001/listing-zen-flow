@@ -19,6 +19,8 @@ import OffersAndPromotionsPage from "./pages/OffersAndPromotionsPage";
 import TaxManagementPage from "./pages/TaxManagementPage";
 import VendorOnboardingPage from "./pages/VendorOnboardingPage";
 import DistributorAuthorizationPage from "./pages/DistributorAuthorizationPage";
+import OrderFinancingPage from "./pages/OrderFinancingPage";
+import SampleOrdersPage from "./pages/SampleOrdersPage";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "./components/ui/toaster";
 
@@ -45,6 +47,8 @@ function App() {
         <Route path="/tax-management" element={<TaxManagementPage />} />
         <Route path="/vendor-onboarding" element={<VendorOnboardingPage />} />
         <Route path="/distributor-authorization" element={<DistributorAuthorizationPage />} />
+        <Route path="/order-financing" element={<OrderFinancingPage />} />
+        <Route path="/sample-orders" element={<SampleOrdersPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
