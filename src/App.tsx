@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import OrdersPage from "./pages/OrdersPage";
 import ProposalsPage from "./pages/ProposalsPage";
 import ReturnGiftsPage from "./pages/ReturnGiftsPage";
+import ReturnGiftDetailPage from "./pages/ReturnGiftDetailPage";
+import ReturnGiftBatchPage from "./pages/ReturnGiftBatchPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/proposals" element={<ProposalsPage />} />
           <Route path="/return-gifts" element={<ReturnGiftsPage />} />
+          <Route path="/return-gifts/:id" element={<ReturnGiftDetailPage />} />
+          <Route path="/return-gifts/batch" element={<ReturnGiftBatchPage />} />
           <Route path="/account-settings" element={<AccountSettingsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="*" element={<NotFound />} />

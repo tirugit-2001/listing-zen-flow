@@ -22,10 +22,12 @@ import {
   Calendar, 
   Users, 
   Box,
-  FileText 
+  FileText,
+  BarChart
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export default function ReturnGiftsPage() {
   const { toast } = useToast();
@@ -98,13 +100,15 @@ export default function ReturnGiftsPage() {
               <Plus className="mr-2 h-4 w-4" />
               New Return Gift
             </Button>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
+            <Button asChild variant="outline">
+              <Link to="/return-gifts/batch">
+                <Users className="mr-2 h-4 w-4" />
+                Batch Management
+              </Link>
             </Button>
             <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export
+              <BarChart className="mr-2 h-4 w-4" />
+              Analytics
             </Button>
           </div>
         </div>
@@ -205,8 +209,10 @@ export default function ReturnGiftsPage() {
                         <TableCell>{getStatusBadge(gift.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <ArrowRight className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                              <Link to={`/return-gifts/${gift.id}`}>
+                                <ArrowRight className="h-4 w-4" />
+                              </Link>
                             </Button>
                           </div>
                         </TableCell>
@@ -263,8 +269,10 @@ export default function ReturnGiftsPage() {
                             <TableCell>{getStatusBadge(gift.status)}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <ArrowRight className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                                  <Link to={`/return-gifts/${gift.id}`}>
+                                    <ArrowRight className="h-4 w-4" />
+                                  </Link>
                                 </Button>
                               </div>
                             </TableCell>
@@ -350,9 +358,11 @@ export default function ReturnGiftsPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" className="w-full justify-center" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                View Full Report
+              <Button variant="ghost" className="w-full justify-center" size="sm" asChild>
+                <Link to="/analytics">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View Full Report
+                </Link>
               </Button>
             </CardFooter>
           </Card>
