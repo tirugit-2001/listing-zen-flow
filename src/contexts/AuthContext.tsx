@@ -57,7 +57,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Define resetSessionTimer function first as a useCallback
+  // Define logout function
+  const logout = useCallback(() => {
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
+    if (sessionTimer) clearTimeout(sessionTimer);
+    navigate("/login");
+  }, [navigate, sessionTimer]);
+
+  // Define resetSessionTimer function as a useCallback
   const resetSessionTimer = useCallback(() => {
     if (sessionTimer) clearTimeout(sessionTimer);
     
@@ -71,17 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, SESSION_TIMEOUT);
     
     setSessionTimer(newTimer);
-  }, [sessionTimer]);
-
-  // Define logout function
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
-    if (sessionTimer) clearTimeout(sessionTimer);
-    navigate("/login");
-  };
+  }, [sessionTimer, toast, logout]);
 
   // Handle session timeout
   useEffect(() => {
