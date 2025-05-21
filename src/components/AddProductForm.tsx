@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
@@ -843,7 +844,7 @@ export default function AddProductForm() {
                                 control={form.control}
                                 name="brandingZones"
                                 render={({ field }) => {
-                                  // Ensure all branding zones have an ID
+                                  // Ensure all branding zones have an ID and shape property
                                   const ensureZonesHaveIds = (zones: Partial<BrandingZone>[]): BrandingZone[] => {
                                     return (zones || []).map((zone) => ({
                                       id: zone.id || uuidv4(),
@@ -853,9 +854,11 @@ export default function AddProductForm() {
                                       width: zone.width || 100,
                                       height: zone.height || 100,
                                       method: zone.method || "",
+                                      shape: zone.shape || "rectangle", // Add default "rectangle" if shape is missing
                                       logoFile: zone.logoFile,
                                       brandedMockupUrl: zone.brandedMockupUrl,
-                                      appliedOn: zone.appliedOn
+                                      appliedOn: zone.appliedOn,
+                                      isCrossListing: zone.isCrossListing
                                     }));
                                   };
                                   
