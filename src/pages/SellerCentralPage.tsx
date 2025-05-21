@@ -3,7 +3,7 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { 
@@ -15,11 +15,25 @@ import {
   Package as PackageIcon, 
   ArrowRight, 
   Settings, 
-  User 
+  User,
+  BarChart,
+  TrendingUp,
+  Bell,
+  Calendar,
+  CheckCircle
 } from "lucide-react";
 
 export default function SellerCentralPage() {
   const [platformMode, setPlatformMode] = useState<"wyshkit" | "basecamp">("wyshkit");
+
+  // Mock data for charts
+  const performance = {
+    totalSales: "₹2,45,000",
+    pendingOrders: 7,
+    proposals: 12,
+    returnGiftOrders: 3,
+    inventory: 42
+  };
 
   return (
     <Layout>
@@ -27,14 +41,16 @@ export default function SellerCentralPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Unified Seller Central
+              Seller Central Dashboard
               {platformMode === "wyshkit" ? (
                 <Badge variant="default" className="ml-2 bg-blue-600">WyshKit</Badge>
               ) : (
                 <Badge variant="default" className="ml-2 bg-emerald-600">BaseCampMart</Badge>
               )}
             </h1>
-            <p className="text-muted-foreground">Manage your products, orders, and branding across platforms</p>
+            <p className="text-muted-foreground">
+              Welcome back, Mutations Design. Here's your seller overview for {platformMode === "wyshkit" ? "WyshKit" : "BaseCampMart"}
+            </p>
           </div>
 
           <Tabs 
@@ -49,12 +65,73 @@ export default function SellerCentralPage() {
           </Tabs>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Performance Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">Total Sales (30d)</h3>
+                <p className="text-2xl font-bold">{performance.totalSales}</p>
+                <Badge variant="outline" className="mt-1">+12% vs. last month</Badge>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
+                  <ShoppingCart className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">Pending Orders</h3>
+                <p className="text-2xl font-bold">{performance.pendingOrders}</p>
+                <Button variant="link" size="sm" asChild className="mt-1 p-0 h-auto">
+                  <Link to="/orders">View Orders</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-green-100 text-green-600 p-2 rounded-full mb-3">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">Active Proposals</h3>
+                <p className="text-2xl font-bold">{performance.proposals}</p>
+                <Button variant="link" size="sm" asChild className="mt-1 p-0 h-auto">
+                  <Link to="/proposals">View All</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-purple-100 text-purple-600 p-2 rounded-full mb-3">
+                  <PackageIcon className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">Return Gift Orders</h3>
+                <p className="text-2xl font-bold">{performance.returnGiftOrders}</p>
+                <Button variant="link" size="sm" asChild className="mt-1 p-0 h-auto">
+                  <Link to="/return-gifts">Manage</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Quick Actions */}
           <Card className="col-span-2">
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <span>Quick Actions</span>
-                <Button variant="ghost" size="sm">View All</Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -76,34 +153,35 @@ export default function SellerCentralPage() {
                 <Button asChild variant="outline" className="h-24 flex flex-col">
                   <Link to="/products">
                     <Boxes className="h-6 w-6 mb-1" />
-                    <span>My Products</span>
+                    <span>Products ({performance.inventory})</span>
                   </Link>
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="#">
+                  <Link to="/orders">
                     <ShoppingCart className="h-6 w-6 mb-1" />
-                    <span>Orders</span>
+                    <span>Orders ({performance.pendingOrders})</span>
                   </Link>
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="#">
+                  <Link to="/proposals">
                     <Clock className="h-6 w-6 mb-1" />
-                    <span>Proposals</span>
+                    <span>Proposals ({performance.proposals})</span>
                   </Link>
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="#">
+                  <Link to="/return-gifts">
                     <PackageIcon className="h-6 w-6 mb-1" />
-                    <span>Return Gifts</span>
+                    <span>Return Gifts ({performance.returnGiftOrders})</span>
                   </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
 
+          {/* Account Overview */}
           <Card>
             <CardHeader>
               <CardTitle>Account Overview</CardTitle>
@@ -133,32 +211,38 @@ export default function SellerCentralPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Products</span>
-                  <span>42</span>
+                  <span>{performance.inventory}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Pending Orders</span>
-                  <span>7</span>
+                  <span>{performance.pendingOrders}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Last Login</span>
+                  <span>Today, 10:45 AM</span>
                 </div>
               </div>
-              
-              <div className="pt-2">
-                <Button asChild variant="ghost" size="sm" className="w-full justify-between">
-                  <Link to="#">
-                    <span>Account Settings</span>
-                    <Settings className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
+            <CardFooter className="flex justify-center pt-0">
+              <Button asChild variant="ghost" size="sm" className="w-full justify-center">
+                <Link to="/account-settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>Account Settings</span>
+                </Link>
+              </Button>
+            </CardFooter>
           </Card>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Recent Orders */}
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <span>Recent Orders</span>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/orders">View All</Link>
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -168,6 +252,7 @@ export default function SellerCentralPage() {
                     <div>
                       <h4 className="font-medium">Order #{10000 + order}</h4>
                       <p className="text-sm text-muted-foreground">3 items • ₹12,500</p>
+                      <p className="text-xs text-muted-foreground">2 days ago</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={order === 1 ? "default" : order === 2 ? "secondary" : "outline"}>
@@ -181,13 +266,24 @@ export default function SellerCentralPage() {
                 ))}
               </div>
             </CardContent>
+            <CardFooter>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/orders">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  View All Orders
+                </Link>
+              </Button>
+            </CardFooter>
           </Card>
           
+          {/* Recent Proposals */}
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <span>Recent Proposals</span>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/proposals">View All</Link>
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -200,6 +296,9 @@ export default function SellerCentralPage() {
                         {proposal === 1 ? "12 products" : proposal === 2 ? "5 products" : "8 products"}
                         {" • "}
                         {proposal === 1 ? "₹85,000" : proposal === 2 ? "₹32,000" : "₹54,000"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {proposal === 1 ? "Created today" : proposal === 2 ? "Updated 3 days ago" : "Updated 1 week ago"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -214,56 +313,168 @@ export default function SellerCentralPage() {
                 ))}
               </div>
             </CardContent>
+            <CardFooter>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/proposals">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View All Proposals
+                </Link>
+              </Button>
+            </CardFooter>
           </Card>
         </div>
         
-        <div className="mt-6">
+        {/* Cross-Platform Activity */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Cross-Platform Activity</CardTitle>
+            <CardDescription>Products and orders across WyshKit and BaseCampMart</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">Cross-Listed Products</p>
+                      <h3 className="text-2xl font-bold mt-2">18</h3>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">Pending Approvals</p>
+                      <h3 className="text-2xl font-bold mt-2">3</h3>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">Return Gifts</p>
+                      <h3 className="text-2xl font-bold mt-2">12</h3>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-muted-foreground text-sm">Custom Branding</p>
+                      <h3 className="text-2xl font-bold mt-2">24</h3>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Button asChild className="w-full sm:w-auto">
+                <Link to="/products">
+                  Cross-List New Products
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Recent Activity & Calendar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Cross-Platform Activity</CardTitle>
-              <CardDescription>Products and orders across WyshKit and BaseCampMart</CardDescription>
+              <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-sm">Cross-Listed Products</p>
-                        <h3 className="text-2xl font-bold mt-2">18</h3>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-sm">Pending Approvals</p>
-                        <h3 className="text-2xl font-bold mt-2">3</h3>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-sm">Return Gifts</p>
-                        <h3 className="text-2xl font-bold mt-2">12</h3>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-sm">Custom Branding</p>
-                        <h3 className="text-2xl font-bold mt-2">24</h3>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <div className="flex items-start gap-3">
+                  <div className="bg-green-100 text-green-600 p-1 rounded-full mt-0.5">
+                    <CheckCircle className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Order #10001 shipped</h4>
+                    <p className="text-xs text-muted-foreground">2 hours ago</p>
+                  </div>
                 </div>
                 
-                <Button className="w-full sm:w-auto">Cross-List New Products</Button>
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">New proposal created</h4>
+                    <p className="text-xs text-muted-foreground">Today, 10:45 AM</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-amber-100 text-amber-600 p-1 rounded-full mt-0.5">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">New order received</h4>
+                    <p className="text-xs text-muted-foreground">Yesterday, 4:30 PM</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 text-purple-600 p-1 rounded-full mt-0.5">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">3 products added to catalog</h4>
+                    <p className="text-xs text-muted-foreground">2 days ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-green-100 text-green-600 p-1 rounded-full mt-0.5">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Cross-listing approved</h4>
+                    <p className="text-xs text-muted-foreground">2 days ago</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Upcoming Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Season Catalog Refresh</h4>
+                    <p className="text-xs text-muted-foreground">Tomorrow, 9:00 AM</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Cross-Platform Promotions</h4>
+                    <p className="text-xs text-muted-foreground">June 15, 2025</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 text-blue-600 p-1 rounded-full mt-0.5">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Holiday Marketing Campaign</h4>
+                    <p className="text-xs text-muted-foreground">July 1, 2025</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
