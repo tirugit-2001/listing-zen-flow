@@ -1,4 +1,23 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { 
+  FileText, 
+  CheckCircle, 
+  Upload 
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage
+} from '@/components/ui/form';
 
 export interface DocumentDataType {
   gstCertificate: null | string;
