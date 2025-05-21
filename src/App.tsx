@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Products from "./pages/Products";
 import AddProductPage from "./pages/AddProductPage";
 import BrandingCanvasPage from "./pages/BrandingCanvasPage";
+import SellerCentralPage from "./pages/SellerCentralPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/products" element={<Products />} />
           <Route path="/add-product" element={<AddProductPage />} />
           <Route path="/branding-canvas" element={<BrandingCanvasPage />} />
+          <Route path="/seller-central" element={<SellerCentralPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
