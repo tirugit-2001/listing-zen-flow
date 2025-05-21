@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   BadgePercent, 
   BadgeDollarSign, 
-  TicketPercent, // Replacing Coupon with TicketPercent
+  TicketPercent, 
   Percent, 
   ChartBar, 
   ChartPie, 
@@ -22,11 +22,18 @@ import {
   CalendarCheck,
   Tag,
   Tags,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
+  Split,
+  Brain,
+  Users
 } from "lucide-react";
 import PromotionAnalytics from "@/components/promotions/PromotionAnalytics";
+import PromotionPredictiveAnalytics from "@/components/promotions/PromotionPredictiveAnalytics";
 import PromotionCard from "@/components/promotions/PromotionCard";
 import CreatePromotionForm from "@/components/promotions/CreatePromotionForm";
+import AIRecommendationEngine from "@/components/promotions/AIRecommendationEngine";
+import ABTestingPanel from "@/components/promotions/ABTestingPanel";
 
 export default function OffersAndPromotionsPage() {
   const [activeTab, setActiveTab] = useState("active-promotions");
@@ -116,43 +123,14 @@ export default function OffersAndPromotionsPage() {
     }
   ];
   
-  // AI recommendation data
-  const aiRecommendations = [
-    {
-      id: "rec-1",
-      title: "Low Inventory Flash Sale",
-      description: "Create a flash sale for these 5 products with low inventory to clear stock",
-      impact: "Estimated 38% increase in conversions",
-      products: 5,
-      recommended: "20% discount",
-      category: "inventory"
-    },
-    {
-      id: "rec-2",
-      title: "Bundle Deal Opportunity",
-      description: "Products frequently bought together - create a bundle offer",
-      impact: "Estimated 25% increase in average order value",
-      products: 3,
-      recommended: "10% off bundle",
-      category: "bundling"
-    },
-    {
-      id: "rec-3",
-      title: "Seasonal Promotion",
-      description: "Upcoming monsoon season - promote these waterproof products",
-      impact: "Estimated 42% increase in category sales",
-      products: 7,
-      recommended: "Featured promotion",
-      category: "seasonal"
-    }
-  ];
-  
-  // KPIs data
+  // KPIs data with enhanced AI metrics
   const kpiData = {
     activePromotions: activePromotions.length,
     totalRevenue: "₹121,950",
     conversionRate: "22%",
-    averageDiscount: "18%"
+    averageDiscount: "18%",
+    aiScore: 87, // New AI optimization score
+    predictedRevenue: "₹174,800" // New AI-predicted revenue
   };
   
   // Create new promotion handler
@@ -161,6 +139,26 @@ export default function OffersAndPromotionsPage() {
     toast({
       title: "Promotion Created",
       description: `${data.name} has been created successfully.`,
+    });
+    setActiveTab("active-promotions");
+  };
+
+  // Create promotion from AI recommendation
+  const handleCreateFromRecommendation = (recommendation) => {
+    console.log("Creating promotion from recommendation:", recommendation);
+    toast({
+      title: "Creating From Recommendation",
+      description: `Setting up "${recommendation.title}" promotion.`,
+    });
+    setActiveTab("create-promotion");
+  };
+
+  // Create A/B test handler
+  const handleCreateTest = () => {
+    console.log("Creating new A/B test");
+    toast({
+      title: "A/B Test Setup",
+      description: "Starting A/B test creation wizard.",
     });
   };
 
@@ -184,9 +182,9 @@ export default function OffersAndPromotionsPage() {
           </Button>
         </div>
         
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
+        {/* Enhanced KPI Cards with AI Insights */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+          <Card className="md:col-span-1">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full mb-3">
@@ -198,7 +196,7 @@ export default function OffersAndPromotionsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="md:col-span-1">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
@@ -210,7 +208,7 @@ export default function OffersAndPromotionsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="md:col-span-1">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="bg-purple-100 text-purple-600 p-2 rounded-full mb-3">
@@ -222,7 +220,7 @@ export default function OffersAndPromotionsPage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="md:col-span-1">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
@@ -233,15 +231,52 @@ export default function OffersAndPromotionsPage() {
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="md:col-span-1 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
+                  <Brain className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">AI Optimization Score</h3>
+                <p className="text-2xl font-bold text-blue-700">{kpiData.aiScore}/100</p>
+                <Badge variant="outline" className="mt-1 bg-blue-100 border-blue-300 text-blue-700">Excellent</Badge>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-1 border-emerald-200 bg-emerald-50">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full mb-3">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-medium text-muted-foreground">AI-Predicted Revenue</h3>
+                <p className="text-2xl font-bold text-emerald-700">{kpiData.predictedRevenue}</p>
+                <Badge variant="outline" className="mt-1 bg-emerald-100 border-emerald-300 text-emerald-700">+43% vs Current</Badge>
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
-        {/* Main Content Tabs */}
+        {/* Main Content Tabs - Enhanced with AI capabilities */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:w-[800px]">
-            <TabsTrigger value="active-promotions">Active Promotions</TabsTrigger>
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 lg:w-full">
+            <TabsTrigger value="active-promotions">Active</TabsTrigger>
             <TabsTrigger value="scheduled-promotions">Scheduled</TabsTrigger>
             <TabsTrigger value="expired-promotions">Expired</TabsTrigger>
-            <TabsTrigger value="ai-recommendations">AI Recommendations</TabsTrigger>
+            <TabsTrigger value="ai-recommendations">
+              <Sparkles className="mr-2 h-4 w-4" />
+              AI Recommendations
+            </TabsTrigger>
+            <TabsTrigger value="predictive-analytics">
+              <ChartBar className="mr-2 h-4 w-4" />
+              Predictive Analytics
+            </TabsTrigger>
+            <TabsTrigger value="ab-testing">
+              <Split className="mr-2 h-4 w-4" />
+              A/B Testing
+            </TabsTrigger>
             <TabsTrigger value="create-promotion">Create New</TabsTrigger>
           </TabsList>
           
@@ -426,53 +461,19 @@ export default function OffersAndPromotionsPage() {
             </div>
           </TabsContent>
           
-          {/* AI Recommendations Tab */}
+          {/* AI Recommendations Tab - Completely Overhauled */}
           <TabsContent value="ai-recommendations" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">AI-Powered Recommendations</h2>
-              <Button variant="outline">Refresh Recommendations</Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {aiRecommendations.map(recommendation => (
-                <Card key={recommendation.id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg font-medium">{recommendation.title}</CardTitle>
-                      {recommendation.category === "inventory" && (
-                        <Badge variant="secondary">Inventory</Badge>
-                      )}
-                      {recommendation.category === "bundling" && (
-                        <Badge variant="secondary">Bundle</Badge>
-                      )}
-                      {recommendation.category === "seasonal" && (
-                        <Badge variant="secondary">Seasonal</Badge>
-                      )}
-                    </div>
-                    <CardDescription>{recommendation.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Potential Impact:</span>
-                        <span className="font-medium text-emerald-600">{recommendation.impact}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Products:</span>
-                        <span>{recommendation.products}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Recommendation:</span>
-                        <span>{recommendation.recommended}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Button className="w-full">Create This Promotion</Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <AIRecommendationEngine onCreatePromotion={handleCreateFromRecommendation} />
+          </TabsContent>
+          
+          {/* Predictive Analytics Tab - New */}
+          <TabsContent value="predictive-analytics" className="space-y-6">
+            <PromotionPredictiveAnalytics />
+          </TabsContent>
+          
+          {/* A/B Testing Tab - New */}
+          <TabsContent value="ab-testing" className="space-y-6">
+            <ABTestingPanel onCreateTest={handleCreateTest} />
           </TabsContent>
           
           {/* Create Promotion Tab */}
