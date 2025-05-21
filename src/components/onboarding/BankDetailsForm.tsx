@@ -1,5 +1,6 @@
 
 import { 
+  Form,
   FormField, 
   FormItem, 
   FormLabel, 
@@ -38,7 +39,7 @@ export default function BankDetailsForm({ data, onUpdate }: BankDetailsFormProps
     }
   });
   
-  const onSubmit = (values) => {
+  const onSubmit = (values: BankData) => {
     onUpdate(values);
   };
 
@@ -52,130 +53,132 @@ export default function BankDetailsForm({ data, onUpdate }: BankDetailsFormProps
         </p>
       </div>
       
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <FormField
-              control={form.control}
-              name="accountName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account Holder Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Name as per bank records" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Must match your registered business name
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div>
-            <FormField
-              control={form.control}
-              name="accountType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="accountName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Holder Name</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
+                      <Input placeholder="Name as per bank records" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="current">Current Account</SelectItem>
-                      <SelectItem value="savings">Savings Account</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    We recommend using a current account for business
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <FormField
-              control={form.control}
-              name="accountNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Bank account number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div>
-            <FormField
-              control={form.control}
-              name="ifscCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>IFSC Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="11-character IFSC code" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    11-character code identifying the bank branch
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <FormField
-              control={form.control}
-              name="bankName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bank Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Name of the bank" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormDescription>
+                      Must match your registered business name
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div>
+              <FormField
+                control={form.control}
+                name="accountType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="current">Current Account</SelectItem>
+                        <SelectItem value="savings">Savings Account</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      We recommend using a current account for business
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           
-          <div>
-            <FormField
-              control={form.control}
-              name="bankBranch"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bank Branch</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Branch name or location" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="accountNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bank account number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div>
+              <FormField
+                control={form.control}
+                name="ifscCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>IFSC Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="11-character IFSC code" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      11-character code identifying the bank branch
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        </div>
-        
-        <div className="flex justify-end">
-          <Button type="submit">Save Bank Details</Button>
-        </div>
-      </form>
+          
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="bankName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bank Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Name of the bank" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div>
+              <FormField
+                control={form.control}
+                name="bankBranch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bank Branch</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Branch name or location" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button type="submit">Save Bank Details</Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

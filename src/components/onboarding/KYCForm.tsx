@@ -1,5 +1,6 @@
 
 import { 
+  Form,
   FormField, 
   FormItem, 
   FormLabel, 
@@ -36,7 +37,7 @@ export default function KYCForm({ data, onUpdate }: KYCFormProps) {
     }
   });
   
-  const onSubmit = (values) => {
+  const onSubmit = (values: KYCData) => {
     onUpdate(values);
   };
 
@@ -50,20 +51,70 @@ export default function KYCForm({ data, onUpdate }: KYCFormProps) {
         </p>
       </div>
       
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="gstin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GSTIN</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter 15-digit GSTIN" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Your 15-digit Goods and Services Tax Identification Number
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div>
+              <FormField
+                control={form.control}
+                name="pan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PAN</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter 10-digit PAN" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Your 10-digit Permanent Account Number
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          
           <div>
             <FormField
               control={form.control}
-              name="gstin"
+              name="gstRegistrationType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>GSTIN</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter 15-digit GSTIN" {...field} />
-                  </FormControl>
+                  <FormLabel>GST Registration Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select GST registration type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="regular">Regular</SelectItem>
+                      <SelectItem value="composition">Composition</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="non_resident">Non-Resident</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
-                    Your 15-digit Goods and Services Tax Identification Number
+                    Type of GST registration your business has
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -71,99 +122,51 @@ export default function KYCForm({ data, onUpdate }: KYCFormProps) {
             />
           </div>
           
-          <div>
-            <FormField
-              control={form.control}
-              name="pan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>PAN</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter 10-digit PAN" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Your 10-digit Permanent Account Number
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-        
-        <div>
-          <FormField
-            control={form.control}
-            name="gstRegistrationType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>GST Registration Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select GST registration type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="regular">Regular</SelectItem>
-                    <SelectItem value="composition">Composition</SelectItem>
-                    <SelectItem value="casual">Casual</SelectItem>
-                    <SelectItem value="non_resident">Non-Resident</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Type of GST registration your business has
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <FormField
-              control={form.control}
-              name="legalName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Legal Business Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="As registered with GST" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Legal name as per GST registration
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="legalName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Legal Business Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="As registered with GST" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Legal name as per GST registration
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div>
+              <FormField
+                control={form.control}
+                name="tradeName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trade Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Trade/Brand name of your business" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Trade name of your business (if different from legal name)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           
-          <div>
-            <FormField
-              control={form.control}
-              name="tradeName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Trade Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Trade/Brand name of your business" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Trade name of your business (if different from legal name)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="flex justify-end">
+            <Button type="submit">Save KYC Information</Button>
           </div>
-        </div>
-        
-        <div className="flex justify-end">
-          <Button type="submit">Save KYC Information</Button>
-        </div>
-      </form>
+        </form>
+      </Form>
     </div>
   );
 }
