@@ -19,6 +19,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import MarketingPage from "./pages/MarketingPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
 import AudienceSegmentsPage from "./pages/AudienceSegmentsPage";
+import TaxManagementPage from "./pages/TaxManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/marketing" element={<MarketingPage />} />
           <Route path="/marketing/campaigns/:id" element={<CampaignDetailPage />} />
           <Route path="/marketing/audience-segments" element={<AudienceSegmentsPage />} />
+          <Route path="/tax-management" element={<TaxManagementPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

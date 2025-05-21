@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -807,7 +806,7 @@ export default function MarketingPage() {
                     <div className="flex flex-col gap-3">
                       <div className="bg-background p-3 rounded-lg ml-6 relative">
                         <div className="absolute -left-6 top-0 bg-primary text-white p-1 rounded-full">
-                          <User className="h-4 w-4" />
+                          <Users className="h-4 w-4" />
                         </div>
                         How can I improve my email open rates?
                       </div>
@@ -821,7 +820,7 @@ export default function MarketingPage() {
                       </div>
                       <div className="bg-background p-3 rounded-lg ml-6 relative">
                         <div className="absolute -left-6 top-0 bg-primary text-white p-1 rounded-full">
-                          <User className="h-4 w-4" />
+                          <Users className="h-4 w-4" />
                         </div>
                         Which products should I promote next month?
                       </div>
