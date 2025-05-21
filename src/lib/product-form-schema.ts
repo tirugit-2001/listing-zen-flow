@@ -10,9 +10,11 @@ export interface BrandingZone {
   width: number;
   height: number;
   method: string;
+  shape: "rectangle" | "circle"; // Added shape property
   logoFile?: string;
   brandedMockupUrl?: string;
   appliedOn?: string;
+  isCrossListing?: boolean; // Added cross-listing flag
 }
 
 // Define category-specific schemas
@@ -74,13 +76,16 @@ export const brandingSchema = z.object({
       width: z.number().min(50),
       height: z.number().min(50),
       method: z.string(),
+      shape: z.enum(["rectangle", "circle"]).default("rectangle"),
       logoFile: z.string().optional(),
       brandedMockupUrl: z.string().optional(),
       appliedOn: z.string().optional(),
+      isCrossListing: z.boolean().optional(),
     })
   ).optional(),
   brandingCost: z.number().min(0).optional(),
   brandingGstRate: z.number().default(18),
+  brandingTemplates: z.array(z.string()).optional(),
 });
 
 // Packaging schema
@@ -103,6 +108,9 @@ export const crossListingSchema = z.object({
   originalVendorId: z.string().optional(),
   cgcsCustomBranding: z.boolean().default(false),
   crosslistBrandingPrice: z.number().min(0).optional(),
+  crosslistApprovedDate: z.string().optional(),
+  crosslistApprovedBy: z.string().optional(),
+  crosslistStatus: z.enum(["PENDING", "APPROVED", "REJECTED", "DRAFT"]).default("DRAFT"),
 });
 
 // Certification schema
@@ -110,6 +118,8 @@ export const certificationSchema = z.object({
   certificationRequired: z.enum(["Yes", "No"]),
   certificateType: z.string().optional(),
   certificateUpload: z.string().optional(),
+  certificateExpiryDate: z.string().optional(),
+  certificateNumber: z.string().optional(),
 });
 
 // Get dynamic schema based on category
