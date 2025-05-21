@@ -1,4 +1,3 @@
-
 import { 
   Form,
   FormField, 
@@ -26,9 +25,10 @@ interface BusinessData {
   state: string;
   pincode: string;
   website: string;
+  [key: string]: any; // Allow for additional properties
 }
 
-interface BusinessDetailsFormProps {
+export interface BusinessDetailsFormProps {
   data: BusinessData;
   onUpdate: (data: BusinessData) => void;
 }
@@ -40,13 +40,13 @@ export default function BusinessDetailsForm({ data, onUpdate }: BusinessDetailsF
       businessType: data.businessType || "",
       registrationNumber: data.registrationNumber || "",
       yearEstablished: data.yearEstablished || "",
-      contactPerson: data.contactPerson || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      address: data.address || "",
-      city: data.city || "",
-      state: data.state || "",
-      pincode: data.pincode || "",
+      contactPerson: data.contactPerson?.name || data.contactPerson || "",
+      email: data.contactPerson?.email || data.email || "",
+      phone: data.contactPerson?.phone || data.phone || "",
+      address: data.address?.street || data.address || "",
+      city: data.address?.city || data.city || "",
+      state: data.address?.state || data.state || "",
+      pincode: data.address?.postalCode || data.pincode || "",
       website: data.website || ""
     }
   });

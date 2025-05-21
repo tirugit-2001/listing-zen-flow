@@ -122,7 +122,7 @@ interface SampleOrderListProps {
 
 export default function SampleOrderList({ filter }: SampleOrderListProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState(filter === "all" ? "active" : filter);
+  const [activeTab, setActiveTab] = useState<"active" | "past">(filter === "all" ? "active" : filter as "active" | "past");
   
   let filteredOrders = activeTab === "active" ? activeSampleOrders : pastSampleOrders;
   
@@ -150,7 +150,10 @@ export default function SampleOrderList({ filter }: SampleOrderListProps) {
   return (
     <div className="space-y-4">
       {filter === "all" && (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value: string) => setActiveTab(value as "active" | "past")}
+        >
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="past">Past</TabsTrigger>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   FormField,
@@ -23,7 +22,7 @@ interface DocumentData {
   signatureProof: any;
 }
 
-interface DocumentVerificationFormProps {
+export interface DocumentVerificationFormProps {
   data: DocumentData;
   onUpdate: (data: DocumentData) => void;
 }

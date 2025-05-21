@@ -1,243 +1,235 @@
-
 import { useState } from "react";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle, AlertCircle, Clock, FileText, MoreHorizontal, Eye } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Search, 
+  Filter, 
+  Eye, 
+  Download, 
+  Check, 
+  X,
+  AlertCircle
+} from "lucide-react";
 
-interface VendorVerification {
+interface PendingVerification {
   id: string;
   businessName: string;
+  applicationType: string;
   submittedDate: string;
-  status: "pending" | "in_progress" | "approved" | "rejected" | "flagged";
+  status: string;
   documents: number;
-  kycScore?: number;
 }
 
-interface AdminKYCDashboardProps {
-  pendingVerifications: VendorVerification[];
+export interface AdminKYCDashboardProps {
+  pendingVerifications: PendingVerification[];
 }
 
 export default function AdminKYCDashboard({ pendingVerifications }: AdminKYCDashboardProps) {
-  const [selectedVendor, setSelectedVendor] = useState<VendorVerification | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case "pending":
-        return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Pending</Badge>;
-      case "in_progress":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">In Progress</Badge>;
-      case "approved":
+  // Filter verifications based on search term and status
+  const filteredVerifications = pendingVerifications.filter((verification) => {
+    const matchesSearch = 
+      verification.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      verification.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = 
+      filterStatus === "all" || 
+      verification.status.toLowerCase().includes(filterStatus.toLowerCase());
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Pending Review":
+        return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Pending Review</Badge>;
+      case "Documents Missing":
+        return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Documents Missing</Badge>;
+      case "Approved":
         return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Approved</Badge>;
-      case "rejected":
+      case "Rejected":
         return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Rejected</Badge>;
-      case "flagged":
-        return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Flagged</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
-  };
-  
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case "pending":
-        return <Clock className="h-4 w-4 text-amber-600" />;
-      case "in_progress":
-        return <Clock className="h-4 w-4 text-blue-600" />;
-      case "approved":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "rejected":
-      case "flagged":
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return null;
-    }
-  };
-  
-  const getKYCScoreColor = (score) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-amber-600";
-    return "text-red-600";
   };
 
   return (
-    <>
-      <Table>
-        <TableCaption>List of pending vendor verifications that require review</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Business Name</TableHead>
-            <TableHead>Submitted Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Documents</TableHead>
-            <TableHead>KYC Score</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pendingVerifications.map((vendor) => (
-            <TableRow key={vendor.id}>
-              <TableCell className="font-medium">{vendor.businessName}</TableCell>
-              <TableCell>{new Date(vendor.submittedDate).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(vendor.status)}
-                  {getStatusBadge(vendor.status)}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span>{vendor.documents}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <span className={`font-medium ${getKYCScoreColor(vendor.kycScore)}`}>
-                    {vendor.kycScore}%
-                  </span>
-                  <Progress value={vendor.kycScore} className="h-2 w-14" />
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedVendor(vendor);
-                        setIsViewOpen(true);
-                      }}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Reject
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      {/* Vendor Details Dialog */}
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Vendor Verification Details</DialogTitle>
-            <DialogDescription>
-              Review vendor KYC details and documents
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedVendor && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Business Information</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Business Name:</span>
-                      <span className="font-medium">{selectedVendor.businessName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Submitted Date:</span>
-                      <span>{new Date(selectedVendor.submittedDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status:</span>
-                      <span>{getStatusBadge(selectedVendor.status)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">KYC Score:</span>
-                      <span className={`font-medium ${getKYCScoreColor(selectedVendor.kycScore)}`}>
-                        {selectedVendor.kycScore}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Document Verification</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        GST Certificate
-                      </span>
-                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Verified</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        PAN Card
-                      </span>
-                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Verified</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Business Registration
-                      </span>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Pending</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Cancelled Cheque
-                      </span>
-                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Verified</Badge>
-                    </div>
-                  </div>
-                </div>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
+                <AlertCircle className="h-5 w-5" />
               </div>
-              
+              <h3 className="text-sm font-medium text-muted-foreground">Pending Verifications</h3>
+              <p className="text-2xl font-bold">12</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-green-100 text-green-600 p-2 rounded-full mb-3">
+                <Check className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-medium text-muted-foreground">Approved Today</h3>
+              <p className="text-2xl font-bold">5</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-red-100 text-red-600 p-2 rounded-full mb-3">
+                <X className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-medium text-muted-foreground">Rejected Today</h3>
+              <p className="text-2xl font-bold">2</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending Verifications</CardTitle>
+          <CardDescription>
+            Review and approve vendor applications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search vendors..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Filter className="mr-2 h-4 w-4" />
+                Filter
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+          
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendor ID</TableHead>
+                  <TableHead>Business Name</TableHead>
+                  <TableHead>Application Type</TableHead>
+                  <TableHead>Submitted Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Documents</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredVerifications.length > 0 ? (
+                  filteredVerifications.map((verification) => (
+                    <TableRow key={verification.id}>
+                      <TableCell className="font-medium">{verification.id}</TableCell>
+                      <TableCell>{verification.businessName}</TableCell>
+                      <TableCell>{verification.applicationType}</TableCell>
+                      <TableCell>{verification.submittedDate}</TableCell>
+                      <TableCell>{getStatusBadge(verification.status)}</TableCell>
+                      <TableCell>{verification.documents} files</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          Review
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      No pending verifications found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>
+            Recent verification actions taken by admin team
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4 border-b pb-4">
+              <div className="bg-green-100 text-green-600 p-2 rounded-full">
+                <Check className="h-4 w-4" />
+              </div>
               <div>
-                <h3 className="text-lg font-medium mb-3">Verification Notes</h3>
-                <p className="text-sm text-muted-foreground">
-                  Business registration document needs manual review. There appears to be a 
-                  discrepancy between the business name in the registration document and the GST certificate.
-                </p>
+                <p className="font-medium">Vendor approved: Organic Foods Ltd</p>
+                <p className="text-sm text-muted-foreground">Approved by Admin1 • Today, 10:30 AM</p>
               </div>
             </div>
-          )}
-          
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline">Request More Documents</Button>
-            <Button variant="destructive">Reject</Button>
-            <Button>Approve Vendor</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            
+            <div className="flex items-start gap-4 border-b pb-4">
+              <div className="bg-red-100 text-red-600 p-2 rounded-full">
+                <X className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-medium">Vendor rejected: Quick Supplies</p>
+                <p className="text-sm text-muted-foreground">Rejected by Admin2 • Today, 9:15 AM</p>
+                <p className="text-sm mt-1">Reason: Incomplete documentation</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="bg-green-100 text-green-600 p-2 rounded-full">
+                <Check className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-medium">Vendor approved: Tech Gadgets Inc</p>
+                <p className="text-sm text-muted-foreground">Approved by Admin1 • Yesterday, 4:45 PM</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

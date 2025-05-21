@@ -1,4 +1,3 @@
-
 import { 
   Form,
   FormField, 
@@ -18,8 +17,10 @@ interface BankData {
   accountNumber: string;
   ifscCode: string;
   bankName: string;
-  bankBranch: string;
+  bankBranch?: string;
+  branchName?: string;
   accountType: string;
+  [key: string]: any; // Allow for additional properties
 }
 
 interface BankDetailsFormProps {
@@ -34,7 +35,7 @@ export default function BankDetailsForm({ data, onUpdate }: BankDetailsFormProps
       accountNumber: data.accountNumber || "",
       ifscCode: data.ifscCode || "",
       bankName: data.bankName || "",
-      bankBranch: data.bankBranch || "",
+      bankBranch: data.bankBranch || data.branchName || "",
       accountType: data.accountType || ""
     }
   });

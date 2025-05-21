@@ -77,19 +77,58 @@ const initialBusinessData = {
   }
 };
 
+// Mock document data (empty initially)
+const initialDocumentData = {
+  gstCertificate: null,
+  panCard: null,
+  businessRegistration: null,
+  cancelledCheque: null,
+  addressProof: null,
+  signatureProof: null
+};
+
 // Mock bank data
 const initialBankData = {
   accountName: "Mutations Design Pvt Ltd",
   accountNumber: "1234567890",
   ifscCode: "ABCD0001234",
   bankName: "ICICI Bank",
-  branchName: "Andheri East",
+  bankBranch: "Andheri East",
   accountType: "Current"
 };
+
+// Mock pending verifications for AdminKYCDashboard
+const pendingVerifications = [
+  {
+    id: "vendor-001",
+    businessName: "EcoGoods Trading",
+    applicationType: "New Vendor",
+    submittedDate: "2025-05-18",
+    status: "Pending Review",
+    documents: 6
+  },
+  {
+    id: "vendor-002",
+    businessName: "Tech Innovations Ltd",
+    applicationType: "New Vendor",
+    submittedDate: "2025-05-17",
+    status: "Documents Missing",
+    documents: 4
+  },
+  {
+    id: "vendor-003", 
+    businessName: "Artisan Crafts Co",
+    applicationType: "New Vendor",
+    submittedDate: "2025-05-15",
+    status: "Pending Review",
+    documents: 6
+  }
+];
 
 export default function VendorOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [businessData, setBusinessData] = useState(initialBusinessData);
+  const [documentData, setDocumentData] = useState(initialDocumentData);
   const [bankData, setBankData] = useState(initialBankData);
   const [viewMode, setViewMode] = useState<"vendor" | "admin">("vendor");
   
@@ -155,8 +194,8 @@ export default function VendorOnboardingPage() {
                   <CardContent className="pt-6 pb-6">
                     {currentStep === 0 && (
                       <BusinessDetailsForm 
-                        initialData={businessData}
-                        onSubmit={(data) => {
+                        data={businessData}
+                        onUpdate={(data) => {
                           setBusinessData(data);
                           handleNext();
                         }}
@@ -165,19 +204,21 @@ export default function VendorOnboardingPage() {
                     
                     {currentStep === 1 && (
                       <DocumentVerificationForm 
-                        onNext={handleNext}
-                        onBack={handleBack}
+                        data={documentData}
+                        onUpdate={(data) => {
+                          setDocumentData(data);
+                          handleNext();
+                        }}
                       />
                     )}
                     
                     {currentStep === 2 && (
                       <BankDetailsForm 
-                        initialData={bankData}
-                        onSubmit={(data) => {
+                        data={bankData}
+                        onUpdate={(data) => {
                           setBankData(data);
                           handleNext();
                         }}
-                        onBack={handleBack}
                       />
                     )}
                     
@@ -247,7 +288,7 @@ export default function VendorOnboardingPage() {
             </div>
           </>
         ) : (
-          <AdminKYCDashboard />
+          <AdminKYCDashboard pendingVerifications={pendingVerifications} />
         )}
       </div>
     </Layout>
