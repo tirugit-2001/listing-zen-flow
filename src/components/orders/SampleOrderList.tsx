@@ -1,275 +1,280 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { SearchIcon, Filter, ArrowRight, CheckCircle, Clock, Package, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Eye, 
+  MoreVertical, 
+  Download, 
+  ClipboardCheck, 
+  ThumbsUp, 
+  ThumbsDown,
+  Check,
+  X
+} from "lucide-react";
 
-// Sample order mock data
-const sampleOrders = {
-  active: [
-    {
-      id: "sample-1",
-      product: "Premium Metal Water Bottle",
-      vendor: "EcoThrive Products",
-      requestDate: "2025-05-15",
-      status: "Approved",
-      quantity: 3,
-      expectedDelivery: "2025-05-25",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: ""
-    },
-    {
-      id: "sample-2",
-      product: "Organic Cotton Tote Bag",
-      vendor: "EcoThrive Products",
-      requestDate: "2025-05-16",
-      status: "Pending",
-      quantity: 2,
-      expectedDelivery: "",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: ""
-    },
-    {
-      id: "sample-3",
-      product: "Wireless Charger Pad",
-      vendor: "TechGadgetry",
-      requestDate: "2025-05-14",
-      status: "In Transit",
-      quantity: 1,
-      expectedDelivery: "2025-05-23",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: ""
-    }
-  ],
-  past: [
-    {
-      id: "sample-4",
-      product: "Bamboo Notebook & Pen Set",
-      vendor: "Wellness Essentials",
-      requestDate: "2025-04-20",
-      status: "Delivered",
-      quantity: 5,
-      deliveryDate: "2025-04-28",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: "Great quality, will be placing a bulk order"
-    },
-    {
-      id: "sample-5",
-      product: "Smart Travel Mug",
-      vendor: "TechGadgetry",
-      requestDate: "2025-04-10",
-      status: "Canceled",
-      quantity: 2,
-      deliveryDate: "",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: ""
-    },
-    {
-      id: "sample-6",
-      product: "Eco-Friendly Gift Hamper",
-      vendor: "Premium Office Supplies",
-      requestDate: "2025-03-15",
-      status: "Delivered",
-      quantity: 1,
-      deliveryDate: "2025-03-25",
-      imageUrl: "https://placehold.co/100x100",
-      feedback: "Quality was acceptable, but packaging needs improvement"
-    }
-  ]
+// Define sample order types
+type SampleOrder = {
+  id: string;
+  product: string;
+  vendor: string;
+  requestDate: string;
+  status: string;
+  quantity: number;
+  expectedDelivery: string;
+  imageUrl: string;
+  feedback: string;
 };
 
+// Mock data for sample orders
+const activeSampleOrders: SampleOrder[] = [
+  {
+    id: "SO-001",
+    product: "Eco-friendly Water Bottle",
+    vendor: "GreenWare Inc.",
+    requestDate: "2025-05-10",
+    status: "Processing",
+    quantity: 2,
+    expectedDelivery: "2025-05-25",
+    imageUrl: "/placeholder.svg",
+    feedback: ""
+  },
+  {
+    id: "SO-002",
+    product: "Cotton Canvas Tote",
+    vendor: "Fabric Designers",
+    requestDate: "2025-05-12",
+    status: "Shipped",
+    quantity: 3,
+    expectedDelivery: "2025-05-20",
+    imageUrl: "/placeholder.svg",
+    feedback: ""
+  },
+  {
+    id: "SO-003",
+    product: "Bamboo Notebook",
+    vendor: "EcoStationery",
+    requestDate: "2025-05-14",
+    status: "Processing",
+    quantity: 5,
+    expectedDelivery: "2025-05-28",
+    imageUrl: "/placeholder.svg",
+    feedback: ""
+  }
+];
+
+const pastSampleOrders: SampleOrder[] = [
+  {
+    id: "SO-004",
+    product: "Recycled Pen Set",
+    vendor: "Office Eco",
+    requestDate: "2025-04-02",
+    status: "Delivered",
+    quantity: 10,
+    expectedDelivery: "2025-04-10",
+    imageUrl: "/placeholder.svg",
+    feedback: "Good quality, will place bulk order"
+  },
+  {
+    id: "SO-005",
+    product: "Wooden USB Drive",
+    vendor: "TechWood",
+    requestDate: "2025-04-15",
+    status: "Delivered",
+    quantity: 2,
+    expectedDelivery: "2025-04-22",
+    imageUrl: "/placeholder.svg",
+    feedback: "Not satisfied with storage capacity"
+  },
+  {
+    id: "SO-006",
+    product: "Recycled Paper Notepad",
+    vendor: "GreenPaper Co.",
+    requestDate: "2025-03-28",
+    status: "Delivered",
+    quantity: 5,
+    expectedDelivery: "2025-04-05",
+    imageUrl: "/placeholder.svg",
+    feedback: "Great quality, approved for bulk order"
+  }
+];
+
 interface SampleOrderListProps {
-  filter: "active" | "past";
+  filter: "active" | "past" | "all";
 }
 
 export default function SampleOrderList({ filter }: SampleOrderListProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSample, setSelectedSample] = useState<any | null>(null);
-  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState(filter === "all" ? "active" : filter);
   
-  const orders = sampleOrders[filter] || [];
+  let filteredOrders = activeTab === "active" ? activeSampleOrders : pastSampleOrders;
   
-  const filteredOrders = orders.filter(order =>
-    order.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.vendor.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (searchTerm) {
+    filteredOrders = filteredOrders.filter(order => 
+      order.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
   
-  const handleFeedbackSubmit = () => {
-    toast({
-      title: "Feedback Submitted",
-      description: "Your feedback has been recorded for this sample order",
-    });
-    setFeedbackDialogOpen(false);
-    // In a real app, this would update the sample order with the feedback
-  };
-  
-  const getStatusIcon = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Approved":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "Pending":
-        return <Clock className="h-4 w-4 text-amber-500" />;
-      case "In Transit":
-        return <Package className="h-4 w-4 text-blue-500" />;
+      case "Processing":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Processing</Badge>;
+      case "Shipped":
+        return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Shipped</Badge>;
       case "Delivered":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "Canceled":
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Delivered</Badge>;
       default:
-        return null;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search samples..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
+      {filter === "all" && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="past">Past</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+      
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search orders..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-xs"
+        />
+        
+        <Button variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Export
         </Button>
       </div>
       
-      {filteredOrders.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          No sample orders found
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredOrders.map((order) => (
-            <Card key={order.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="flex items-center p-4 gap-4">
-                  <div className="w-16 h-16 shrink-0">
-                    <img 
-                      src={order.imageUrl} 
-                      alt={order.product}
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{order.product}</h4>
-                    <p className="text-sm text-muted-foreground">{order.vendor}</p>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm">
-                      <span>Qty: {order.quantity}</span>
-                      <span>Requested: {new Date(order.requestDate).toLocaleDateString()}</span>
-                      {order.deliveryDate && (
-                        <span>Delivered: {new Date(order.deliveryDate).toLocaleDateString()}</span>
-                      )}
-                      {order.expectedDelivery && !order.deliveryDate && (
-                        <span>Expected: {new Date(order.expectedDelivery).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-end gap-2">
-                    <Badge className="flex items-center gap-1">
-                      {getStatusIcon(order.status)}
-                      {order.status}
-                    </Badge>
-                    
-                    <div className="flex items-center gap-2">
-                      {filter === "active" && order.status === "Delivered" && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSample(order);
-                            setFeedbackDialogOpen(true);
-                          }}
-                        >
-                          Add Feedback
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">Order ID</TableHead>
+              <TableHead>Product</TableHead>
+              <TableHead className="hidden md:table-cell">Vendor</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell">Date Requested</TableHead>
+              <TableHead className="hidden md:table-cell">Expected Delivery</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredOrders.length > 0 ? (
+              filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableCell>{order.product}</TableCell>
+                  <TableCell className="hidden md:table-cell">{order.vendor}</TableCell>
+                  <TableCell>{getStatusBadge(order.status)}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {new Date(order.requestDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {new Date(order.expectedDelivery).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
                         </Button>
-                      )}
-                      
-                      {filter === "past" && order.status === "Delivered" && (
-                        <Button variant="outline" size="sm">Order Now</Button>
-                      )}
-                      
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          <span>View Details</span>
+                        </DropdownMenuItem>
+                        
+                        {order.status === "Delivered" ? (
+                          <>
+                            <DropdownMenuItem>
+                              <ThumbsUp className="mr-2 h-4 w-4 text-green-600" />
+                              <span>Approve Sample</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <ThumbsDown className="mr-2 h-4 w-4 text-red-600" />
+                              <span>Reject Sample</span>
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <DropdownMenuItem>
+                            <ClipboardCheck className="mr-2 h-4 w-4" />
+                            <span>Track Order</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  No sample orders found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {filteredOrders.length > 0 && activeTab === "past" && (
+        <div className="mt-6">
+          <h3 className="font-medium mb-3">Sample Feedback Summary</h3>
+          <div className="space-y-3">
+            {pastSampleOrders.map(order => (
+              <div key={`feedback-${order.id}`} className="p-3 border rounded-md">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{order.product}</p>
+                    <p className="text-sm text-muted-foreground">{order.vendor} • {order.id}</p>
                   </div>
+                  {order.feedback.includes("approved") || order.feedback.includes("will place") ? (
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 flex items-center">
+                      <Check className="mr-1 h-3 w-3" /> Approved
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 flex items-center">
+                      <X className="mr-1 h-3 w-3" /> Rejected
+                    </Badge>
+                  )}
                 </div>
-                
-                {filter === "past" && order.feedback && (
-                  <div className="border-t p-4">
-                    <h5 className="font-medium text-sm mb-1">Your Feedback:</h5>
-                    <p className="text-sm text-muted-foreground">{order.feedback}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                <div className="mt-2">
+                  <p className="text-sm">{order.feedback || "No feedback provided"}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      
-      {/* Feedback Dialog */}
-      <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Submit Feedback</DialogTitle>
-            <DialogDescription>
-              Please provide your feedback on this sample to help the vendor improve their products.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedSample && (
-            <div className="flex items-center gap-3 py-2">
-              <img 
-                src={selectedSample.imageUrl} 
-                alt={selectedSample.product}
-                className="w-12 h-12 object-cover rounded-md"
-              />
-              <div>
-                <h4 className="font-medium">{selectedSample.product}</h4>
-                <p className="text-sm text-muted-foreground">{selectedSample.vendor}</p>
-              </div>
-            </div>
-          )}
-          
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="feedback">Your Feedback</Label>
-              <Textarea
-                id="feedback"
-                placeholder="Share your thoughts on the quality, design, and functionality of the sample"
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFeedbackDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleFeedbackSubmit}>Submit Feedback</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

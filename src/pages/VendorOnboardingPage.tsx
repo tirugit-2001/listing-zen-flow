@@ -1,270 +1,254 @@
 
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import Stepper from "@/components/onboarding/Stepper";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
+import { Stepper } from "@/components/onboarding/Stepper";
 import KYCForm from "@/components/onboarding/KYCForm";
 import BusinessDetailsForm from "@/components/onboarding/BusinessDetailsForm";
-import BankDetailsForm from "@/components/onboarding/BankDetailsForm";
 import DocumentVerificationForm from "@/components/onboarding/DocumentVerificationForm";
-import OnboardingProgress from "@/components/onboarding/OnboardingProgress";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import BankDetailsForm from "@/components/onboarding/BankDetailsForm";
+import AdminKYCDashboard from "@/components/onboarding/AdminKYCDashboard";
+import { Clock } from "lucide-react";
 
-// Define the steps for the onboarding process
+// Define onboarding steps
 const steps = [
-  { id: "business", label: "Business Details" },
-  { id: "kyc", label: "KYC Information" },
-  { id: "documents", label: "Document Verification" },
-  { id: "bank", label: "Bank Details" }
+  { id: "business", title: "Business Info" },
+  { id: "documents", title: "Documents" },
+  { id: "bank", title: "Bank Details" },
+  { id: "review", title: "Review" },
 ];
 
-// Mock data for progress tracking
-const onboardingSteps = [
+// Mock onboarding progress steps
+const progressSteps = [
   {
-    id: "business",
-    name: "Business Details",
+    id: "business_details",
+    name: "Business Information",
     status: "completed" as const,
-    description: "Basic information about your business",
-    completedAt: new Date(Date.now() - 86400000 * 3) // 3 days ago
+    description: "Company profile and business details",
+    completedAt: new Date(2025, 4, 15, 10, 30),
   },
   {
-    id: "kyc",
-    name: "KYC Information",
-    status: "in-progress" as const,
-    description: "GSTIN and other tax-related information"
-  },
-  {
-    id: "documents",
+    id: "document_verification",
     name: "Document Verification",
-    status: "pending" as const,
-    description: "Upload required business documents"
+    status: "completed" as const,
+    description: "Upload and verify business documents",
+    completedAt: new Date(2025, 4, 15, 11, 45),
   },
   {
-    id: "bank",
-    name: "Bank Details",
+    id: "bank_details",
+    name: "Bank Account Details",
+    status: "in-progress" as const,
+    description: "Connect your business bank account",
+  },
+  {
+    id: "review",
+    name: "Application Review",
     status: "pending" as const,
-    description: "Payment and bank account information"
-  }
+    description: "Final review by BaseCampMart team",
+  },
+  {
+    id: "kyc_verification",
+    name: "KYC Verification",
+    status: "pending" as const,
+    description: "Identity and business verification",
+  },
 ];
+
+// Mock business data
+const initialBusinessData = {
+  businessName: "Mutations Design",
+  businessType: "Private Limited",
+  registrationNumber: "ABCDE12345",
+  yearEstablished: "2020",
+  gstNumber: "22AAAAA0000A1Z5",
+  address: {
+    street: "123 Main St",
+    city: "Mumbai",
+    state: "Maharashtra",
+    country: "India",
+    postalCode: "400001",
+  },
+  contactPerson: {
+    name: "Rahul Sharma",
+    email: "rahul@mutationsdesign.com",
+    phone: "+91 98765 43210",
+  }
+};
+
+// Mock bank data
+const initialBankData = {
+  accountName: "Mutations Design Pvt Ltd",
+  accountNumber: "1234567890",
+  ifscCode: "ABCD0001234",
+  bankName: "ICICI Bank",
+  branchName: "Andheri East",
+  accountType: "Current"
+};
 
 export default function VendorOnboardingPage() {
-  const [activeStep, setActiveStep] = useState(1); // KYC step (0-indexed internally, 1 for display)
-  const [activeTab, setActiveTab] = useState("onboarding");
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-  
-  // Mock data for the forms
-  const [businessData, setBusinessData] = useState({});
-  const [kycData, setKycData] = useState({
-    gstin: "",
-    pan: "",
-    gstRegistrationType: "",
-    legalName: "",
-    tradeName: ""
-  });
-  const [bankData, setBankData] = useState({});
+  const [currentStep, setCurrentStep] = useState(0);
+  const [businessData, setBusinessData] = useState(initialBusinessData);
+  const [bankData, setBankData] = useState(initialBankData);
+  const [viewMode, setViewMode] = useState<"vendor" | "admin">("vendor");
   
   const handleNext = () => {
-    if (activeStep < steps.length) {
-      setActiveStep(activeStep + 1);
-      toast({
-        title: "Progress Saved",
-        description: `${steps[activeStep - 1].label} information saved successfully.`
-      });
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
     }
   };
   
   const handleBack = () => {
-    if (activeStep > 1) {
-      setActiveStep(activeStep - 1);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
   
-  const handleKYCUpdate = (data: any) => {
-    setKycData(data);
-    
-    // Simulate API call and AI verification
-    setTimeout(() => {
-      toast({
-        title: "KYC Information Updated",
-        description: "Your KYC details have been saved and are being verified."
-      });
-    }, 500);
+  const handleSubmit = () => {
+    // In a real implementation, this would submit the onboarding data to the backend
+    console.log("Submitting onboarding data:", { businessData, bankData });
+    // Show success message or redirect to dashboard
   };
-  
-  // Calculate overall progress
-  const completedSteps = onboardingSteps.filter(step => step.status === "completed").length;
-  const overallProgress = Math.round((completedSteps / onboardingSteps.length) * 100);
-  
+
   return (
     <Layout>
       <div className="container py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Vendor Onboarding</h1>
-          <p className="text-muted-foreground">
-            Complete your vendor profile to start selling on BaseCampMart
-          </p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Vendor Onboarding</h1>
+            <p className="text-muted-foreground">
+              Complete your profile to start selling on BaseCampMart
+            </p>
+          </div>
+          
+          <div className="flex items-center">
+            <Button 
+              variant={viewMode === "vendor" ? "default" : "outline"} 
+              onClick={() => setViewMode("vendor")}
+              className="mr-2"
+            >
+              Vendor View
+            </Button>
+            <Button 
+              variant={viewMode === "admin" ? "default" : "outline"} 
+              onClick={() => setViewMode("admin")}
+            >
+              Admin View
+            </Button>
+          </div>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
-            <TabsTrigger value="status">Status & History</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="onboarding">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Vendor Registration</CardTitle>
-                    <CardDescription>
-                      Please complete all required information to set up your vendor account
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {!isMobile && (
-                      <div className="mb-8">
-                        <Stepper 
-                          steps={steps} 
-                          activeStep={activeStep} 
-                          onStepClick={(step) => setActiveStep(step)}
-                        />
-                      </div>
-                    )}
-                    
-                    {activeStep === 1 && (
+        {viewMode === "vendor" ? (
+          <>
+            <div className="mb-6">
+              <Stepper 
+                steps={steps} 
+                currentStep={currentStep} 
+                onStepClick={(step) => setCurrentStep(step)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              <div className="md:col-span-8">
+                <Card className="mb-6">
+                  <CardContent className="pt-6 pb-6">
+                    {currentStep === 0 && (
                       <BusinessDetailsForm 
-                        data={businessData} 
-                        onUpdate={setBusinessData} 
-                        onNext={handleNext}
+                        initialData={businessData}
+                        onSubmit={(data) => {
+                          setBusinessData(data);
+                          handleNext();
+                        }}
                       />
                     )}
                     
-                    {activeStep === 2 && (
-                      <KYCForm 
-                        data={kycData} 
-                        onUpdate={handleKYCUpdate} 
-                      />
-                    )}
-                    
-                    {activeStep === 3 && (
+                    {currentStep === 1 && (
                       <DocumentVerificationForm 
-                        onNext={handleNext} 
+                        onNext={handleNext}
                         onBack={handleBack}
                       />
                     )}
                     
-                    {activeStep === 4 && (
+                    {currentStep === 2 && (
                       <BankDetailsForm 
-                        data={bankData} 
-                        onUpdate={setBankData} 
+                        initialData={bankData}
+                        onSubmit={(data) => {
+                          setBankData(data);
+                          handleNext();
+                        }}
                         onBack={handleBack}
                       />
+                    )}
+                    
+                    {currentStep === 3 && (
+                      <div>
+                        <h2 className="text-xl font-semibold mb-4">Review and Submit</h2>
+                        <p className="mb-6 text-muted-foreground">
+                          Please review all the information you've provided before submitting your application.
+                        </p>
+                        
+                        <div className="space-y-6">
+                          <div>
+                            <h3 className="text-lg font-medium mb-2">Business Information</h3>
+                            <div className="bg-muted p-4 rounded-md">
+                              <pre className="whitespace-pre-wrap text-sm">
+                                {JSON.stringify(businessData, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h3 className="text-lg font-medium mb-2">Bank Details</h3>
+                            <div className="bg-muted p-4 rounded-md">
+                              <pre className="whitespace-pre-wrap text-sm">
+                                {JSON.stringify(bankData, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                          
+                          <div className="pt-4 flex justify-between">
+                            <Button type="button" variant="outline" onClick={handleBack}>
+                              Back
+                            </Button>
+                            <Button type="button" onClick={handleSubmit}>
+                              Submit Application
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
               </div>
               
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Registration Progress</CardTitle>
-                    <CardDescription>
-                      Track your onboarding status
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <OnboardingProgress
-                      steps={onboardingSteps}
-                      currentStepId={steps[activeStep - 1].id}
-                      overallProgress={overallProgress}
-                    />
-                  </CardContent>
-                </Card>
+              <div className="md:col-span-4">
+                <div className="space-y-6">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center mb-4">
+                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-medium">Estimated Completion Time</h3>
+                      </div>
+                      <p className="text-2xl font-bold">15-20 minutes</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        You can save and continue later at any point
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <OnboardingProgress
+                    steps={progressSteps}
+                    currentStepId="bank_details"
+                    overallProgress={40}
+                  />
+                </div>
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="status">
-            <Card>
-              <CardHeader>
-                <CardTitle>Verification Status</CardTitle>
-                <CardDescription>
-                  Track the status of your verification process
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="border rounded-lg p-4 bg-amber-50">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-full bg-amber-100 p-2">
-                        <Clock className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">Verification in Progress</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Your vendor documents are being verified by our team. This process typically takes 1-2 business days.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Verification Timeline</h3>
-                    
-                    <div className="relative">
-                      <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-muted" />
-                      <div className="space-y-6">
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 top-1 rounded-full bg-green-600 w-4 h-4" />
-                          <div>
-                            <p className="text-sm font-medium">Business Details Submitted</p>
-                            <p className="text-xs text-muted-foreground">May 18, 2025 at 10:30 AM</p>
-                          </div>
-                        </div>
-                        
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 top-1 rounded-full bg-green-600 w-4 h-4" />
-                          <div>
-                            <p className="text-sm font-medium">KYC Information Submitted</p>
-                            <p className="text-xs text-muted-foreground">May 19, 2025 at 3:45 PM</p>
-                          </div>
-                        </div>
-                        
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 top-1 rounded-full bg-amber-500 w-4 h-4" />
-                          <div>
-                            <p className="text-sm font-medium">Document Verification In Progress</p>
-                            <p className="text-xs text-muted-foreground">Started May 20, 2025 at 9:15 AM</p>
-                          </div>
-                        </div>
-                        
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 top-1 rounded-full bg-muted w-4 h-4" />
-                          <div>
-                            <p className="text-sm text-muted-foreground font-medium">Banking Details Pending</p>
-                            <p className="text-xs text-muted-foreground">Not started yet</p>
-                          </div>
-                        </div>
-                        
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 top-1 rounded-full bg-muted w-4 h-4" />
-                          <div>
-                            <p className="text-sm text-muted-foreground font-medium">Final Approval</p>
-                            <p className="text-xs text-muted-foreground">Pending verification completion</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </>
+        ) : (
+          <AdminKYCDashboard />
+        )}
       </div>
     </Layout>
   );
