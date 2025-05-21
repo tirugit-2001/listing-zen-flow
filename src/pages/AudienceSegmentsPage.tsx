@@ -800,7 +800,7 @@ export default function AudienceSegmentsPage() {
                 <CardContent className="space-y-4">
                   <div className="bg-muted p-3 rounded-lg flex flex-col gap-1">
                     <span className="font-medium">Product Viewers</span>
-                    <span className="text-sm text-muted-foreground">Users who viewed specific products but didn't purchase</span>
+                    <span className="text-sm text-muted-foreground">Users who viewed specific products but didn&apos;t purchase</span>
                     <Button size="sm" className="mt-2 w-full">Use Template</Button>
                   </div>
                   
@@ -1103,3 +1103,4 @@ export default function AudienceSegmentsPage() {
     </Layout>
   );
 }
+
