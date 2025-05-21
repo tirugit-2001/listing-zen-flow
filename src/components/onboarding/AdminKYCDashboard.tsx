@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   AlertCircle, 
@@ -28,7 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface PendingVerification {
+// Make the interface exportable by declaring it separately
+export interface PendingVerification {
   id: string;
   businessName: string;
   applicationType: string;
