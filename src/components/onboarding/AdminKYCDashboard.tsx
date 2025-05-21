@@ -1,4 +1,32 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { 
+  AlertCircle, 
+  Check, 
+  X, 
+  Search, 
+  Filter, 
+  Download, 
+  Eye
+} from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from '@/components/ui/card';
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface PendingVerification {
   id: string;
