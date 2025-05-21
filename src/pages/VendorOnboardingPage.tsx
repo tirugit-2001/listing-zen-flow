@@ -153,13 +153,13 @@ export default function VendorOnboardingPage() {
     });
   };
   
-  // Mock pending vendor verification list for admin view
+  // Mock pending vendor verification list for admin view with correct status types
   const pendingVerifications = [
     {
       id: "v-001",
       businessName: "Ace Retail Solutions",
       submittedDate: "2025-05-10",
-      status: "pending",
+      status: "pending" as const, // Type assertion to match the VendorVerification interface
       documents: 6,
       kycScore: 85
     },
@@ -167,7 +167,7 @@ export default function VendorOnboardingPage() {
       id: "v-002",
       businessName: "Global Merchandise Ltd.",
       submittedDate: "2025-05-12",
-      status: "in_progress",
+      status: "in_progress" as const,
       documents: 4,
       kycScore: 65
     },
@@ -175,7 +175,7 @@ export default function VendorOnboardingPage() {
       id: "v-003",
       businessName: "EcoWare Distributors",
       submittedDate: "2025-05-08",
-      status: "flagged",
+      status: "flagged" as const,
       documents: 6,
       kycScore: 45
     },
@@ -183,7 +183,7 @@ export default function VendorOnboardingPage() {
       id: "v-004",
       businessName: "Tech Gadgets India",
       submittedDate: "2025-05-15",
-      status: "pending",
+      status: "pending" as const,
       documents: 5,
       kycScore: 90
     }

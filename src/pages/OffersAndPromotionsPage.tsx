@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   BadgePercent, 
   BadgeDollarSign, 
-  Coupon, 
+  TicketPercent, // Replacing Coupon with TicketPercent
   Percent, 
   ChartBar, 
   ChartPie, 
