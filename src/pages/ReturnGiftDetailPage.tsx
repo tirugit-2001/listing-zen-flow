@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import ReturnGiftsBreadcrumb from "@/components/returnGifts/ReturnGiftsBreadcrumb";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Card, 
   CardContent, 
@@ -35,12 +37,15 @@ import {
   Clock, 
   Calendar,
   Truck,
-  PenLine
+  PenLine,
+  Shield
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ReturnGiftDetailPage() {
   const { id } = useParams();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   // Mock gift data
@@ -117,6 +122,15 @@ export default function ReturnGiftDetailPage() {
   };
 
   const copyTrackingLink = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access this feature",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Tracking Link Copied",
       description: "The tracking link has been copied to your clipboard.",
@@ -124,6 +138,15 @@ export default function ReturnGiftDetailPage() {
   };
 
   const sendReminders = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access this feature",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Reminders Sent",
       description: "Reminder emails have been sent to all pending recipients.",
@@ -131,6 +154,15 @@ export default function ReturnGiftDetailPage() {
   };
 
   const downloadReport = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access this feature",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Report Download Started",
       description: "Your return gift report is being generated and will download shortly.",
@@ -140,6 +172,22 @@ export default function ReturnGiftDetailPage() {
   return (
     <Layout>
       <div className="container py-6">
+        <ReturnGiftsBreadcrumb />
+        
+        {!isAuthenticated && (
+          <Alert className="mb-6 bg-amber-50 text-amber-800 border-amber-200">
+            <Shield className="h-4 w-4" />
+            <AlertTitle>Authentication Required</AlertTitle>
+            <AlertDescription>
+              To access all features of this page, please{" "}
+              <Link to="/login" className="font-medium underline">
+                sign in to your account
+              </Link>
+              .
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" asChild className="mr-2">
@@ -148,7 +196,7 @@ export default function ReturnGiftDetailPage() {
               </Link>
             </Button>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight">
                   {gift.title}
                 </h1>
@@ -164,21 +212,21 @@ export default function ReturnGiftDetailPage() {
           <div className="flex flex-wrap gap-2">
             <Button>
               <Send className="mr-2 h-4 w-4" />
-              Send Updates
+              <span className="hidden sm:inline">Send Updates</span>
             </Button>
             <Button variant="outline">
               <PenLine className="mr-2 h-4 w-4" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Button>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Export
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList>
+          <TabsList className="overflow-x-auto pb-px">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="recipients">Recipients ({recipients.length})</TabsTrigger>
             <TabsTrigger value="products">Products ({products.length})</TabsTrigger>
@@ -303,7 +351,7 @@ export default function ReturnGiftDetailPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab("products")}>
                     <Package className="h-4 w-4 mr-2" />
                     View All Products
                   </Button>
@@ -339,7 +387,7 @@ export default function ReturnGiftDetailPage() {
                 <CardDescription>
                   Manage all recipients for this return gift campaign
                 </CardDescription>
-                <div className="flex justify-between mt-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2">
                   <Button size="sm">
                     <Users className="h-4 w-4 mr-2" />
                     Add Recipients
@@ -347,24 +395,24 @@ export default function ReturnGiftDetailPage() {
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={sendReminders}>
                       <Send className="h-4 w-4 mr-2" />
-                      Send Reminders
+                      <span className="hidden sm:inline">Send Reminders</span>
                     </Button>
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
-                      Export
+                      <span className="hidden sm:inline">Export</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead className="hidden md:table-cell">Email</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Tracking</TableHead>
+                      <TableHead className="hidden sm:table-cell">Tracking</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -373,9 +421,9 @@ export default function ReturnGiftDetailPage() {
                       <TableRow key={recipient.id}>
                         <TableCell>#{recipient.id}</TableCell>
                         <TableCell>{recipient.name}</TableCell>
-                        <TableCell>{recipient.email}</TableCell>
+                        <TableCell className="hidden md:table-cell">{recipient.email}</TableCell>
                         <TableCell>{getStatusBadge(recipient.status)}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {recipient.trackingId ? recipient.trackingId : 
                             <span className="text-muted-foreground text-sm">Not shipped yet</span>
                           }
@@ -420,14 +468,14 @@ export default function ReturnGiftDetailPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
                       <TableHead>Product</TableHead>
                       <TableHead>Quantity</TableHead>
-                      <TableHead>Unit Price</TableHead>
+                      <TableHead className="hidden sm:table-cell">Unit Price</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -439,7 +487,7 @@ export default function ReturnGiftDetailPage() {
                         <TableCell>{product.id}</TableCell>
                         <TableCell>{product.name}</TableCell>
                         <TableCell>{product.quantity}</TableCell>
-                        <TableCell>{product.unitPrice}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{product.unitPrice}</TableCell>
                         <TableCell>{product.total}</TableCell>
                         <TableCell>{getStatusBadge(product.status)}</TableCell>
                         <TableCell>

@@ -1,5 +1,6 @@
 
 import Layout from "@/components/layout/Layout";
+import ReturnGiftsBreadcrumb from "@/components/returnGifts/ReturnGiftsBreadcrumb";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,11 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ReturnGiftsPage() {
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const [platformFilter, setPlatformFilter] = useState<"all" | "wyshkit" | "basecamp">("all");
   
   const giftStatuses = [
@@ -78,6 +81,15 @@ export default function ReturnGiftsPage() {
   );
 
   const createNewGift = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create a new return gift",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Create New Return Gift",
       description: "Opening return gift creation workflow",
@@ -87,6 +99,8 @@ export default function ReturnGiftsPage() {
   return (
     <Layout>
       <div className="container py-6">
+        <ReturnGiftsBreadcrumb />
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center">
@@ -95,18 +109,18 @@ export default function ReturnGiftsPage() {
             </h1>
             <p className="text-muted-foreground">Create and manage branded return gifts for your clients</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={createNewGift}>
               <Plus className="mr-2 h-4 w-4" />
               New Return Gift
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="hidden sm:flex">
               <Link to="/return-gifts/batch">
                 <Users className="mr-2 h-4 w-4" />
                 Batch Management
               </Link>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="hidden md:flex">
               <BarChart className="mr-2 h-4 w-4" />
               Analytics
             </Button>
@@ -167,9 +181,9 @@ export default function ReturnGiftsPage() {
         </div>
 
         <Tabs defaultValue="all">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 overflow-x-auto flex-nowrap justify-start w-full md:justify-center">
             {giftStatuses.map((status) => (
-              <TabsTrigger key={status.value} value={status.value}>
+              <TabsTrigger key={status.value} value={status.value} className="whitespace-nowrap">
                 {status.label} ({status.value === "all" ? filteredGifts.length : filteredGifts.filter(g => g.status === status.value).length})
               </TabsTrigger>
             ))}
@@ -181,17 +195,17 @@ export default function ReturnGiftsPage() {
                 <CardTitle>All Return Gifts</CardTitle>
                 <CardDescription>Manage all return gift campaigns</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
-                      <TableHead>Client</TableHead>
+                      <TableHead className="hidden md:table-cell">Client</TableHead>
                       <TableHead>Campaign</TableHead>
-                      <TableHead>Recipients</TableHead>
-                      <TableHead>Budget</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Platform</TableHead>
+                      <TableHead className="hidden md:table-cell">Recipients</TableHead>
+                      <TableHead className="hidden sm:table-cell">Budget</TableHead>
+                      <TableHead className="hidden lg:table-cell">Date</TableHead>
+                      <TableHead className="hidden sm:table-cell">Platform</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -200,12 +214,14 @@ export default function ReturnGiftsPage() {
                     {filteredGifts.map((gift) => (
                       <TableRow key={gift.id}>
                         <TableCell className="font-medium">{gift.id}</TableCell>
-                        <TableCell>{gift.client}</TableCell>
-                        <TableCell>{gift.title}</TableCell>
-                        <TableCell>{gift.recipients}</TableCell>
-                        <TableCell>{gift.budget}</TableCell>
-                        <TableCell>{gift.date}</TableCell>
-                        <TableCell>{getPlatformBadge(gift.platform)}</TableCell>
+                        <TableCell className="hidden md:table-cell">{gift.client}</TableCell>
+                        <TableCell className="max-w-[150px] truncate" title={gift.title}>
+                          {gift.title}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{gift.recipients}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{gift.budget}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{gift.date}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{getPlatformBadge(gift.platform)}</TableCell>
                         <TableCell>{getStatusBadge(gift.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -239,17 +255,17 @@ export default function ReturnGiftsPage() {
                   <CardTitle>{giftStatuses.find(s => s.value === status)?.label}</CardTitle>
                   <CardDescription>Return gift campaigns with status: {status}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Client</TableHead>
+                        <TableHead className="hidden md:table-cell">Client</TableHead>
                         <TableHead>Campaign</TableHead>
-                        <TableHead>Recipients</TableHead>
-                        <TableHead>Budget</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Platform</TableHead>
+                        <TableHead className="hidden md:table-cell">Recipients</TableHead>
+                        <TableHead className="hidden sm:table-cell">Budget</TableHead>
+                        <TableHead className="hidden lg:table-cell">Date</TableHead>
+                        <TableHead className="hidden sm:table-cell">Platform</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -260,12 +276,14 @@ export default function ReturnGiftsPage() {
                         .map((gift) => (
                           <TableRow key={gift.id}>
                             <TableCell className="font-medium">{gift.id}</TableCell>
-                            <TableCell>{gift.client}</TableCell>
-                            <TableCell>{gift.title}</TableCell>
-                            <TableCell>{gift.recipients}</TableCell>
-                            <TableCell>{gift.budget}</TableCell>
-                            <TableCell>{gift.date}</TableCell>
-                            <TableCell>{getPlatformBadge(gift.platform)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{gift.client}</TableCell>
+                            <TableCell className="max-w-[150px] truncate" title={gift.title}>
+                              {gift.title}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{gift.recipients}</TableCell>
+                            <TableCell className="hidden sm:table-cell">{gift.budget}</TableCell>
+                            <TableCell className="hidden lg:table-cell">{gift.date}</TableCell>
+                            <TableCell className="hidden sm:table-cell">{getPlatformBadge(gift.platform)}</TableCell>
                             <TableCell>{getStatusBadge(gift.status)}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">

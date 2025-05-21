@@ -13,9 +13,14 @@ import {
   Globe, 
   MessageSquare, 
   TrendingUp, 
-  BarChart
+  BarChart,
+  Menu,
+  X,
+  LogIn,
+  LogOut
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +28,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -49,26 +61,185 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Header() {
   const { toast } = useToast();
+  const { isAuthenticated, user, logout } = useAuth();
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
+  
+  // Close search dropdown when route changes
+  useEffect(() => {
+    setShowSearch(false);
+    setShowMobileMenu(false);
+  }, [location.pathname]);
   
   // Helper to check if a path is active
   const isActive = (path: string) => location.pathname === path;
   const isActiveParent = (path: string) => location.pathname.startsWith(path);
 
+  // Helper to get user initials for avatar
+  const getUserInitials = () => {
+    if (!user?.name) return "U";
+    return user.name
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get avatar color based on user role
+  const getAvatarColor = () => {
+    if (!user?.role) return "bg-primary";
+    
+    switch (user.role) {
+      case "admin":
+        return "bg-purple-500";
+      case "vendor":
+        return "bg-cyan-500";
+      default:
+        return "bg-primary";
+    }
+  };
+
+  // Mobile menu content
+  const MobileMenuContent = () => (
+    <div className="flex flex-col gap-4 py-4">
+      <div className="border-b pb-4">
+        <p className="font-medium mb-2">Products</p>
+        <div className="space-y-2">
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/products" className={isActive('/products') ? 'text-primary font-medium' : ''}>All Products</Link>
+          </Button>
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/add-product" className={isActive('/add-product') ? 'text-primary font-medium' : ''}>Add Product</Link>
+          </Button>
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/branding-canvas" className={isActive('/branding-canvas') ? 'text-primary font-medium' : ''}>Branding Canvas</Link>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="border-b pb-4">
+        <p className="font-medium mb-2">Orders</p>
+        <div className="space-y-2">
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/orders" className={isActive('/orders') ? 'text-primary font-medium' : ''}>Manage Orders</Link>
+          </Button>
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/proposals" className={isActive('/proposals') ? 'text-primary font-medium' : ''}>Proposals</Link>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="border-b pb-4">
+        <Button asChild variant="ghost" className="w-full justify-start">
+          <Link to="/return-gifts" className={isActiveParent('/return-gifts') ? 'text-primary font-medium' : ''}>Return Gifts</Link>
+        </Button>
+      </div>
+      
+      <div className="border-b pb-4">
+        <p className="font-medium mb-2">Marketing</p>
+        <div className="space-y-2">
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/marketing" className={isActive('/marketing') ? 'text-primary font-medium' : ''}>Campaign Dashboard</Link>
+          </Button>
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/marketing/audience-segments" className={isActive('/marketing/audience-segments') ? 'text-primary font-medium' : ''}>Audience Segments</Link>
+          </Button>
+        </div>
+      </div>
+      
+      <div>
+        <Button asChild variant="ghost" className="w-full justify-start">
+          <Link to="/analytics" className={isActive('/analytics') ? 'text-primary font-medium' : ''}>Analytics</Link>
+        </Button>
+      </div>
+      
+      {isAuthenticated ? (
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center gap-3 mb-4 px-2">
+            <Avatar>
+              <AvatarImage src={user?.avatar} alt={user?.name} />
+              <AvatarFallback className={getAvatarColor()}>{getUserInitials()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{user?.name}</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+            </div>
+          </div>
+          
+          <Button asChild variant="ghost" className="w-full justify-start">
+            <Link to="/account-settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Account Settings
+            </Link>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-500 hover:text-red-500 hover:bg-red-50"
+            onClick={logout}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-4 pt-4 border-t">
+          <Button asChild className="w-full">
+            <Link to="/login">
+              <LogIn className="h-4 w-4 mr-2" />
+              Sign In
+            </Link>
+          </Button>
+          <p className="text-center mt-2 text-sm text-muted-foreground">
+            New vendor?{" "}
+            <Link to="/vendor-onboarding" className="text-primary hover:underline">
+              Apply here
+            </Link>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <header className="border-b shadow-sm sticky top-0 bg-background z-10">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
+          <div className="block md:hidden">
+            <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>
+                    <Link to="/seller-central" className="flex items-center gap-2" onClick={() => setShowMobileMenu(false)}>
+                      <div className="bg-brand-yellow p-2 rounded-md">
+                        <Package className="h-5 w-5 text-brand-dark" />
+                      </div>
+                      <span className="text-xl font-bold">Seller Central</span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
+                <MobileMenuContent />
+              </SheetContent>
+            </Sheet>
+          </div>
+          
           <Link to="/seller-central" className="flex items-center gap-2">
             <div className="bg-brand-yellow p-2 rounded-md">
               <Package className="h-6 w-6 text-brand-dark" />
             </div>
-            <span className="text-xl font-bold">Seller Central</span>
+            <span className="text-xl font-bold hidden sm:inline">Seller Central</span>
           </Link>
           
           <NavigationMenu className="hidden md:flex">
@@ -192,7 +363,7 @@ export default function Header() {
           </NavigationMenu>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -226,6 +397,7 @@ export default function Header() {
                 <Button 
                   variant="outline" 
                   size="icon"
+                  className="hidden sm:flex"
                   onClick={() => toast({
                     title: "Notifications",
                     description: "You have no new notifications",
@@ -245,14 +417,15 @@ export default function Header() {
               <TooltipTrigger asChild>
                 <Button 
                   variant="outline" 
+                  className="hidden sm:flex"
                   onClick={() => setShowBulkImport(true)}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  Bulk Import
+                  <span className="hidden sm:inline">Import</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Import multiple products at once</p>
+                <p>Import products in bulk</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -263,6 +436,7 @@ export default function Header() {
                 <Button 
                   variant="outline"
                   size="icon"
+                  className="hidden md:flex"
                 >
                   <HelpCircle className="h-4 w-4" />
                 </Button>
@@ -273,47 +447,57 @@ export default function Header() {
             </Tooltip>
           </TooltipProvider>
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline"
-                  size="icon"
-                >
-                  <Globe className="h-4 w-4" />
+          {/* User Account Section */}
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback className={getAvatarColor()}>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Switch Platform</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/account-settings">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Account Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center gap-2 p-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback className={getAvatarColor()}>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{user?.name}</span>
+                    <span className="text-xs text-muted-foreground">{user?.email}</span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/account-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast({ title: "Profile", description: "View and edit your profile" })}>
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={logout}
+                  className="text-red-500 focus:text-red-500"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild>
+              <Link to="/login" className="flex items-center gap-2">
+                <LogIn className="h-4 w-4" />
+                <span>Sign In</span>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
