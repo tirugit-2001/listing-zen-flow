@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -149,7 +148,7 @@ export default function TaxManagementPage() {
 
   // Format date to Indian format (DD/MM/YYYY)
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const options = { year: 'numeric', month: 'short', day: 'numeric' } as Intl.DateTimeFormatOptions;
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
@@ -175,7 +174,7 @@ export default function TaxManagementPage() {
   };
 
   // Calculate days until due date (with type check)
-  const getDaysUntilDue = (dueDate) => {
+  const getDaysUntilDue = (dueDate: string) => {
     const due = new Date(dueDate);
     const today = new Date();
     const differenceInTime = due.getTime() - today.getTime();
