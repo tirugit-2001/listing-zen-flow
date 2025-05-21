@@ -20,7 +20,9 @@ import {
   TrendingUp,
   Bell,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  BadgePercent,
+  BadgeDollarSign
 } from "lucide-react";
 
 export default function SellerCentralPage() {
@@ -165,16 +167,16 @@ export default function SellerCentralPage() {
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/proposals">
-                    <Clock className="h-6 w-6 mb-1" />
-                    <span>Proposals ({performance.proposals})</span>
+                  <Link to="/tax-management">
+                    <BadgeDollarSign className="h-6 w-6 mb-1" />
+                    <span>Tax Management</span>
                   </Link>
                 </Button>
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/return-gifts">
-                    <PackageIcon className="h-6 w-6 mb-1" />
-                    <span>Return Gifts ({performance.returnGiftOrders})</span>
+                  <Link to="/offers-and-promotions">
+                    <BadgePercent className="h-6 w-6 mb-1" />
+                    <span>Offers & Promotions</span>
                   </Link>
                 </Button>
               </div>
@@ -323,6 +325,74 @@ export default function SellerCentralPage() {
             </CardFooter>
           </Card>
         </div>
+        
+        {/* New Features Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>New Features</CardTitle>
+            <CardDescription>Explore the latest additions to BaseCampMart</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full mb-3">
+                      <BadgePercent className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-medium mb-2">Offers & Promotions</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Create and manage discounts, coupons and flash sales
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/offers-and-promotions">
+                        Explore
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-medium mb-2">Vendor Onboarding</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Quick KYC verification and automated document checks
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/vendor-onboarding">
+                        Explore
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
+                      <BadgeDollarSign className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-medium mb-2">Tax Management</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Simplified GST filing and tax compliance tools
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/tax-management">
+                        Explore
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
         
         {/* Cross-Platform Activity */}
         <Card className="mb-6">
