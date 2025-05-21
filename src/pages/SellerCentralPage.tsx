@@ -22,7 +22,9 @@ import {
   Calendar,
   CheckCircle,
   BadgePercent,
-  BadgeDollarSign
+  BadgeDollarSign,
+  Building2,
+  Link as LinkIcon
 } from "lucide-react";
 
 export default function SellerCentralPage() {
@@ -333,7 +335,7 @@ export default function SellerCentralPage() {
             <CardDescription>Explore the latest additions to BaseCampMart</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
@@ -384,6 +386,25 @@ export default function SellerCentralPage() {
                     </p>
                     <Button asChild variant="outline" size="sm">
                       <Link to="/tax-management">
+                        Explore
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-purple-100 text-purple-600 p-2 rounded-full mb-3">
+                      <LinkIcon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-medium mb-2">Distributor Authorization</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Manage brands and product cross-listing permissions
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/distributor-authorization">
                         Explore
                       </Link>
                     </Button>
@@ -441,7 +462,7 @@ export default function SellerCentralPage() {
               </div>
               
               <Button asChild className="w-full sm:w-auto">
-                <Link to="/products">
+                <Link to="/distributor-authorization">
                   Cross-List New Products
                 </Link>
               </Button>
