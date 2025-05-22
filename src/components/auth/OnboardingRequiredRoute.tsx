@@ -10,7 +10,7 @@ interface OnboardingRequiredRouteProps {
 }
 
 export default function OnboardingRequiredRoute({ children }: OnboardingRequiredRouteProps) {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { isLoading: statusLoading, isComplete, currentStep } = useOnboardingStatus();
   
   // Show loading state while checking authentication or onboarding status
@@ -24,7 +24,7 @@ export default function OnboardingRequiredRoute({ children }: OnboardingRequired
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" />;
   }
 
