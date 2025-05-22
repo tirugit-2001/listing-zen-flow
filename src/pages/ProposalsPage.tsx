@@ -1,50 +1,269 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { FileText, Plus, ArrowRight, Filter, Download } from "lucide-react";
+  FileText, Plus, Filter, Download, Search, 
+  ArrowUpDown, Calendar, Users
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ProposalsList from "@/components/proposals/ProposalsList";
+import { Proposal, ProposalStatus } from "@/lib/models/proposal";
+
+// Mock data for proposals
+const mockProposals: Proposal[] = [
+  { 
+    id: "PROP-001", 
+    title: "TechCorp Holiday Gift Kit", 
+    client: { 
+      id: "CLIENT-001", 
+      name: "John Smith", 
+      email: "john@techcorp.com", 
+      company: "TechCorp Inc." 
+    },
+    products: Array(12).fill({
+      id: "PROD-001",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 10,
+      unitPrice: 8500,
+      totalPrice: 85000
+    }),
+    packaging: { type: "premium", description: "Premium box", cost: 5000 },
+    terms: { 
+      paymentTerms: "50% advance", 
+      deliveryTerms: "3 weeks", 
+      validUntil: "2025-06-20" 
+    },
+    pricing: { 
+      subtotal: 85000, 
+      brandingCost: 0, 
+      packagingCost: 5000, 
+      discountAmount: 0, 
+      taxAmount: 16200, 
+      taxRate: 18, 
+      total: 106200 
+    },
+    status: "draft", 
+    createdAt: "2025-05-20", 
+    updatedAt: "2025-05-20",
+    isOfflineOrder: false
+  },
+  { 
+    id: "PROP-002", 
+    title: "Acme Welcome Kit", 
+    client: { 
+      id: "CLIENT-002", 
+      name: "Jane Doe", 
+      email: "jane@acme.com", 
+      company: "Acme Solutions" 
+    },
+    products: Array(5).fill({
+      id: "PROD-002",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 10,
+      unitPrice: 3200,
+      totalPrice: 32000
+    }),
+    packaging: { type: "standard", description: "Standard box", cost: 0 },
+    terms: { 
+      paymentTerms: "Net 30", 
+      deliveryTerms: "2 weeks", 
+      validUntil: "2025-06-18" 
+    },
+    pricing: { 
+      subtotal: 32000, 
+      brandingCost: 0, 
+      packagingCost: 0, 
+      discountAmount: 0, 
+      taxAmount: 5760, 
+      taxRate: 18, 
+      total: 37760 
+    },
+    status: "sent", 
+    createdAt: "2025-05-18", 
+    updatedAt: "2025-05-18",
+    sentAt: "2025-05-18",
+    expiresAt: "2025-06-18",
+    isOfflineOrder: false
+  },
+  { 
+    id: "PROP-003", 
+    title: "Globex Anniversary Gifts", 
+    client: { 
+      id: "CLIENT-003", 
+      name: "Robert Brown", 
+      email: "robert@globex.com", 
+      company: "Globex Corp" 
+    },
+    products: Array(8).fill({
+      id: "PROD-003",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 10,
+      unitPrice: 5400,
+      totalPrice: 54000
+    }),
+    packaging: { type: "premium", description: "Premium box", cost: 4000 },
+    terms: { 
+      paymentTerms: "50% advance", 
+      deliveryTerms: "4 weeks", 
+      validUntil: "2025-06-15" 
+    },
+    pricing: { 
+      subtotal: 54000, 
+      brandingCost: 6000, 
+      packagingCost: 4000, 
+      discountAmount: 0, 
+      taxAmount: 11520, 
+      taxRate: 18, 
+      total: 75520 
+    },
+    status: "sent", 
+    createdAt: "2025-05-15", 
+    updatedAt: "2025-05-15",
+    sentAt: "2025-05-15",
+    expiresAt: "2025-06-15",
+    isOfflineOrder: true
+  },
+  { 
+    id: "PROP-004", 
+    title: "Initech Employee Welcome Kit", 
+    client: { 
+      id: "CLIENT-004", 
+      name: "Michael Scott", 
+      email: "michael@initech.com", 
+      company: "Initech" 
+    },
+    products: Array(3).fill({
+      id: "PROD-004",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 5,
+      unitPrice: 3120,
+      totalPrice: 15600
+    }),
+    packaging: { type: "eco", description: "Eco-friendly box", cost: 3000 },
+    terms: { 
+      paymentTerms: "Net 15", 
+      deliveryTerms: "1 week", 
+      validUntil: "2025-06-12" 
+    },
+    pricing: { 
+      subtotal: 15600, 
+      brandingCost: 2000, 
+      packagingCost: 3000, 
+      discountAmount: 0, 
+      taxAmount: 3708, 
+      taxRate: 18, 
+      total: 24308 
+    },
+    status: "approved", 
+    createdAt: "2025-05-12", 
+    updatedAt: "2025-05-14",
+    sentAt: "2025-05-12",
+    expiresAt: "2025-06-12",
+    isOfflineOrder: false
+  },
+  { 
+    id: "PROP-005", 
+    title: "Umbrella Corp Conference Gifts", 
+    client: { 
+      id: "CLIENT-005", 
+      name: "Albert Wesker", 
+      email: "wesker@umbrella.com", 
+      company: "Umbrella Corp" 
+    },
+    products: Array(10).fill({
+      id: "PROD-005",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 12,
+      unitPrice: 7700,
+      totalPrice: 92400
+    }),
+    packaging: { type: "luxury", description: "Luxury custom box", cost: 12000 },
+    terms: { 
+      paymentTerms: "Full advance", 
+      deliveryTerms: "2 weeks", 
+      validUntil: "2025-06-10" 
+    },
+    pricing: { 
+      subtotal: 92400, 
+      brandingCost: 15000, 
+      packagingCost: 12000, 
+      discountAmount: 0, 
+      taxAmount: 21492, 
+      taxRate: 18, 
+      total: 140892 
+    },
+    status: "approved", 
+    createdAt: "2025-05-10", 
+    updatedAt: "2025-05-11",
+    sentAt: "2025-05-10",
+    expiresAt: "2025-06-10",
+    isOfflineOrder: true
+  },
+  { 
+    id: "PROP-006", 
+    title: "Wayne Enterprises Gift Set", 
+    client: { 
+      id: "CLIENT-006", 
+      name: "Bruce Wayne", 
+      email: "bruce@wayne.com", 
+      company: "Wayne Enterprises" 
+    },
+    products: Array(7).fill({
+      id: "PROD-006",
+      name: "Product Name",
+      thumbnail: "/placeholder.svg",
+      quantity: 6,
+      unitPrice: 8033,
+      totalPrice: 48200
+    }),
+    packaging: { type: "premium", description: "Premium box", cost: 6000 },
+    terms: { 
+      paymentTerms: "50% advance", 
+      deliveryTerms: "3 weeks", 
+      validUntil: "2025-06-05" 
+    },
+    pricing: { 
+      subtotal: 48200, 
+      brandingCost: 7000, 
+      packagingCost: 6000, 
+      discountAmount: 0, 
+      taxAmount: 11016, 
+      taxRate: 18, 
+      total: 72216 
+    },
+    status: "rejected", 
+    createdAt: "2025-05-05", 
+    updatedAt: "2025-05-07",
+    sentAt: "2025-05-05",
+    expiresAt: "2025-06-05",
+    isOfflineOrder: false
+  },
+];
 
 export default function ProposalsPage() {
-  const proposalStatuses = [
-    { label: "All Proposals", value: "all", count: 24 },
-    { label: "Draft", value: "draft", count: 8 },
-    { label: "Sent", value: "sent", count: 10 },
-    { label: "Approved", value: "approved", count: 4 },
-    { label: "Rejected", value: "rejected", count: 2 },
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const proposalStatuses: { label: string; value: ProposalStatus | "all"; count: number }[] = [
+    { label: "All Proposals", value: "all", count: mockProposals.length },
+    { label: "Draft", value: "draft", count: mockProposals.filter(p => p.status === "draft").length },
+    { label: "Sent", value: "sent", count: mockProposals.filter(p => p.status === "sent").length },
+    { label: "Approved", value: "approved", count: mockProposals.filter(p => p.status === "approved").length },
+    { label: "Rejected", value: "rejected", count: mockProposals.filter(p => p.status === "rejected").length },
   ];
 
-  const proposals = [
-    { id: "PROP-001", client: "TechCorp Inc.", title: "TechCorp Holiday Gift Kit", items: 12, total: "₹85,000", date: "2025-05-20", status: "draft" },
-    { id: "PROP-002", client: "Acme Solutions", title: "Acme Welcome Kit", items: 5, total: "₹32,000", date: "2025-05-18", status: "sent" },
-    { id: "PROP-003", client: "Globex Corp", title: "Globex Anniversary Gifts", items: 8, total: "₹54,000", date: "2025-05-15", status: "sent" },
-    { id: "PROP-004", client: "Initech", title: "Initech Employee Welcome Kit", items: 3, total: "₹15,600", date: "2025-05-12", status: "approved" },
-    { id: "PROP-005", client: "Umbrella Corp", title: "Umbrella Corp Conference Gifts", items: 10, total: "₹92,400", date: "2025-05-10", status: "approved" },
-    { id: "PROP-006", client: "Wayne Enterprises", title: "Wayne Enterprises Gift Set", items: 7, total: "₹48,200", date: "2025-05-05", status: "rejected" },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "draft":
-        return <Badge>Draft</Badge>;
-      case "sent":
-        return <Badge variant="outline">Sent</Badge>;
-      case "approved":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-200">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const handleCreateProposal = () => {
+    navigate("/proposals/new");
   };
 
   return (
@@ -58,8 +277,8 @@ export default function ProposalsPage() {
             </h1>
             <p className="text-muted-foreground">Create and manage client proposals</p>
           </div>
-          <div className="flex gap-2">
-            <Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleCreateProposal}>
               <Plus className="mr-2 h-4 w-4" />
               New Proposal
             </Button>
@@ -72,6 +291,91 @@ export default function ProposalsPage() {
               Export
             </Button>
           </div>
+        </div>
+
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹457,098</div>
+              <p className="text-xs text-muted-foreground">
+                +12.5% from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">42%</div>
+              <p className="text-xs text-muted-foreground">
+                +5% from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg. Response Time</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">3.2 days</div>
+              <p className="text-xs text-muted-foreground">
+                -0.5 days from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">24</div>
+              <p className="text-xs text-muted-foreground">
+                +3 from last month
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mb-6 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search proposals..."
+              className="w-full pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Select defaultValue="newest">
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="highest">Highest value</SelectItem>
+              <SelectItem value="lowest">Lowest value</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select defaultValue="all">
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All proposals</SelectItem>
+              <SelectItem value="online">Online orders</SelectItem>
+              <SelectItem value="offline">Offline orders</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Tabs defaultValue="all">
@@ -90,38 +394,7 @@ export default function ProposalsPage() {
                 <CardDescription>View all client proposals</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {proposals.map((proposal) => (
-                      <TableRow key={proposal.id}>
-                        <TableCell className="font-medium">{proposal.id}</TableCell>
-                        <TableCell>{proposal.client}</TableCell>
-                        <TableCell>{proposal.title}</TableCell>
-                        <TableCell>{proposal.items}</TableCell>
-                        <TableCell>{proposal.total}</TableCell>
-                        <TableCell>{proposal.date}</TableCell>
-                        <TableCell>{getStatusBadge(proposal.status)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <ProposalsList proposals={mockProposals} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -135,40 +408,10 @@ export default function ProposalsPage() {
                   <CardDescription>Proposals with status: {status}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {proposals
-                        .filter(proposal => proposal.status === status)
-                        .map((proposal) => (
-                          <TableRow key={proposal.id}>
-                            <TableCell className="font-medium">{proposal.id}</TableCell>
-                            <TableCell>{proposal.client}</TableCell>
-                            <TableCell>{proposal.title}</TableCell>
-                            <TableCell>{proposal.items}</TableCell>
-                            <TableCell>{proposal.total}</TableCell>
-                            <TableCell>{proposal.date}</TableCell>
-                            <TableCell>{getStatusBadge(proposal.status)}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
-                                <ArrowRight className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
+                  <ProposalsList 
+                    proposals={mockProposals} 
+                    filterStatus={status as ProposalStatus} 
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
