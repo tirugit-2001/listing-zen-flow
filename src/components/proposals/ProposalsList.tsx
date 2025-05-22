@@ -1,120 +1,103 @@
 
-import { useState } from "react";
+import { Proposal, ProposalStatus } from "@/lib/models/proposal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ArrowRight, Download, Eye } from "lucide-react";
-import { Proposal, ProposalStatus } from "@/lib/models/proposal";
-import { Link } from "react-router-dom";
+import { ArrowRight, EyeIcon, FileEdit, Mail, CheckCircle, XCircle, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ProposalsListProps {
   proposals: Proposal[];
-  filterStatus?: ProposalStatus | "all";
+  filterStatus?: ProposalStatus;
 }
 
-export default function ProposalsList({ proposals, filterStatus = "all" }: ProposalsListProps) {
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+export default function ProposalsList({ proposals, filterStatus }: ProposalsListProps) {
+  const navigate = useNavigate();
   
-  // Filter proposals if a status filter is provided
-  const filteredProposals = filterStatus === "all" 
-    ? proposals 
-    : proposals.filter(proposal => proposal.status === filterStatus);
+  const filteredProposals = filterStatus 
+    ? proposals.filter(p => p.status === filterStatus) 
+    : proposals;
 
-  const getStatusBadge = (status: ProposalStatus) => {
-    switch (status) {
-      case "draft":
-        return <Badge variant="outline">Draft</Badge>;
-      case "sent":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Sent</Badge>;
-      case "approved":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Approved</Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100">Rejected</Badge>;
-      case "expired":
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700 hover:bg-orange-100">Expired</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const getStatusColor = (status: ProposalStatus) => {
+    switch(status) {
+      case "draft": return "bg-gray-200 text-gray-800 hover:bg-gray-300";
+      case "sent": return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "approved": return "bg-green-100 text-green-800 hover:bg-green-200";
+      case "rejected": return "bg-red-100 text-red-800 hover:bg-red-200";
     }
   };
 
-  // Format date to a more readable format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-IN', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }).format(date);
+  const getStatusIcon = (status: ProposalStatus) => {
+    switch(status) {
+      case "draft": return <FileEdit className="h-3.5 w-3.5 mr-1" />;
+      case "sent": return <Mail className="h-3.5 w-3.5 mr-1" />;
+      case "approved": return <CheckCircle className="h-3.5 w-3.5 mr-1" />;
+      case "rejected": return <XCircle className="h-3.5 w-3.5 mr-1" />;
+    }
   };
 
+  const handleViewProposal = (id: string) => {
+    navigate(`/proposals/${id}`);
+  };
+
+  if (filteredProposals.length === 0) {
+    return (
+      <div className="p-4 text-center border rounded-md bg-muted/20">
+        <p className="text-muted-foreground">No proposals found.</p>
+      </div>
+    );
+  }
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>ID</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Title</TableHead>
-          <TableHead className="hidden md:table-cell">Items</TableHead>
-          <TableHead className="text-right">Total</TableHead>
-          <TableHead className="hidden md:table-cell">Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {filteredProposals.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-              No proposals found
-            </TableCell>
-          </TableRow>
-        ) : (
-          filteredProposals.map((proposal) => (
-            <TableRow 
-              key={proposal.id}
-              onMouseEnter={() => setHoveredRow(proposal.id)}
-              onMouseLeave={() => setHoveredRow(null)}
-              className="group"
+    <div className="space-y-4">
+      {filteredProposals.map((proposal) => (
+        <div 
+          key={proposal.id} 
+          className="border rounded-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-muted/10 transition-colors" 
+        >
+          <div>
+            <div className="flex items-center mb-1">
+              <h3 className="font-medium mr-2">{proposal.title}</h3>
+              <Badge className={getStatusColor(proposal.status)}>
+                {getStatusIcon(proposal.status)}
+                {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
+              </Badge>
+              {proposal.isOfflineOrder && (
+                <Badge variant="outline" className="ml-2 text-xs">
+                  Offline Order
+                </Badge>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+              <span>ID: {proposal.id}</span>
+              <span>Client: {proposal.client.company}</span>
+              <span>Created: {proposal.createdAt}</span>
+              <span>
+                Value: ₹{proposal.pricing.total.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3 sm:mt-0">
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="flex items-center"
+              onClick={() => handleViewProposal(proposal.id)}
             >
-              <TableCell className="font-medium">{proposal.id}</TableCell>
-              <TableCell>{proposal.client.company}</TableCell>
-              <TableCell>{proposal.title}</TableCell>
-              <TableCell className="hidden md:table-cell">{proposal.products.length}</TableCell>
-              <TableCell className="text-right">₹{proposal.pricing.total.toLocaleString('en-IN')}</TableCell>
-              <TableCell className="hidden md:table-cell">{formatDate(proposal.createdAt)}</TableCell>
-              <TableCell>{getStatusBadge(proposal.status)}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  {(hoveredRow === proposal.id || true) && (
-                    <>
-                      <Button variant="ghost" size="icon" asChild title="View">
-                        <Link to={`/proposals/${proposal.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Download">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild title="Go to details">
-                        <Link to={`/proposals/${proposal.id}`}>
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+              <EyeIcon className="mr-1 h-4 w-4" />
+              View
+            </Button>
+            <Button size="sm" className="flex items-center">
+              {proposal.status === "draft" ? (
+                <>Send <ArrowRight className="ml-1 h-4 w-4" /></>
+              ) : proposal.status === "sent" ? (
+                <>Follow up <Clock className="ml-1 h-4 w-4" /></>
+              ) : (
+                <>Edit <FileEdit className="ml-1 h-4 w-4" /></>
+              )}
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

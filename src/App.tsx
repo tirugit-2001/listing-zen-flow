@@ -10,6 +10,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProposalsPage from "./pages/ProposalsPage";
 import CreateProposalPage from "./pages/CreateProposalPage";
+import ProposalDetailPage from "./pages/ProposalDetailPage";
 import ReturnGiftsPage from "./pages/ReturnGiftsPage";
 import ReturnGiftDetailPage from "./pages/ReturnGiftDetailPage";
 import ReturnGiftBatchPage from "./pages/ReturnGiftBatchPage";
@@ -102,6 +103,11 @@ function App() {
             <Route path="/proposals/new" element={
               <OnboardingRequiredRoute>
                 <CreateProposalPage />
+              </OnboardingRequiredRoute>
+            } />
+            <Route path="/proposals/:id" element={
+              <OnboardingRequiredRoute>
+                <ProposalDetailPage />
               </OnboardingRequiredRoute>
             } />
             <Route path="/return-gifts/*" element={
