@@ -13,6 +13,7 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
   resetSessionTimer: () => void;
+  isLoading: boolean; // Add the isLoading property
 }
 
 interface UserProfile {
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check local storage on initial load
     return localStorage.getItem("isAuthenticated") === "true";
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Add isLoading state
   const [user, setUser] = useState<UserProfile | null>(() => {
     // Load user from localStorage if available
     const savedUser = localStorage.getItem("user");
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Define logout function
+  // Define logout function as a useCallback
   const logout = useCallback(() => {
     setIsAuthenticated(false);
     setUser(null);
@@ -82,6 +84,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     setSessionTimer(newTimer);
   }, [sessionTimer, toast, logout]);
+
+  // Simulate initial authentication check
+  useEffect(() => {
+    // Simulate a delay for authentication check
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle session timeout
   useEffect(() => {
@@ -114,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     // This would normally be an API call
     try {
+      setIsLoading(true);
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
@@ -133,6 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         
         resetSessionTimer();
+        setIsLoading(false);
         return true;
       }
       
@@ -143,12 +157,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: error instanceof Error ? error.message : "Please check your credentials and try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
       return false;
     }
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
+      setIsLoading(true);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
       
@@ -156,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Password reset link sent",
         description: `Instructions to reset your password have been sent to ${email}`,
       });
+      setIsLoading(false);
       return true;
     } catch (error) {
       toast({
@@ -163,6 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Please check your email address and try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
       return false;
     }
   };
@@ -174,6 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     resetPassword,
     resetSessionTimer,
+    isLoading, // Add isLoading to the context value
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

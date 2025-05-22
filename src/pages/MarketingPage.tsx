@@ -22,16 +22,34 @@ import AIRecommendationEngine from "@/components/promotions/AIRecommendationEngi
 import PromotionCard from "@/components/promotions/PromotionCard";
 import PromotionAnalytics from "@/components/promotions/PromotionAnalytics";
 
+// Define a type for the recommendation that matches AIRecommendationEngine's RecommendationType
+interface RecommendationType {
+  id: string;
+  title: string;
+  description: string;
+  impact: string;
+  confidence: number;
+  category: "inventory" | "bundle" | "seasonal" | "audience" | "timing";
+  products?: number | string;
+  recommended?: string;
+  predictedRevenue?: string;
+  predictedConversion?: string;
+  targetAudience?: string[];
+}
+
 export default function MarketingPage() {
   const [activeTab, setActiveTab] = useState("promotions");
   const { toast } = useToast();
 
-  // Mock promotions data
+  // Updated promotions data to match PromotionCard props
   const promotions = [
     {
       id: "promo1",
       title: "Summer Sale",
+      name: "Summer Sale Campaign", // Added name property
       type: "discount",
+      discount: "20%", // Added discount property
+      products: ["Product 1", "Product 2", "Product 3"], // Added products property
       status: "active",
       startDate: "2025-05-15",
       endDate: "2025-06-15",
@@ -42,7 +60,10 @@ export default function MarketingPage() {
     {
       id: "promo2",
       title: "New Collection Launch",
+      name: "Spring Collection Launch", // Added name property
       type: "featured",
+      discount: "", // Empty discount for featured type
+      products: ["New Product 1", "New Product 2"], // Added products property
       status: "scheduled",
       startDate: "2025-05-25",
       endDate: "2025-06-10",
@@ -53,7 +74,10 @@ export default function MarketingPage() {
     {
       id: "promo3",
       title: "Clearance Sale",
+      name: "End of Season Clearance", // Added name property
       type: "discount",
+      discount: "50%", // Added discount property
+      products: ["Old Product 1", "Old Product 2", "Old Product 3", "Old Product 4"], // Added products property
       status: "draft",
       startDate: "",
       endDate: "",
@@ -62,6 +86,18 @@ export default function MarketingPage() {
       performance: 0
     }
   ];
+
+  // Add handler for creating promotions from AI recommendations
+  const handleCreatePromotion = (recommendation: RecommendationType) => {
+    toast({
+      title: "Promotion Created",
+      description: `Your "${recommendation.title}" promotion has been created successfully.`,
+    });
+    
+    // In a real application, this would create a promotion and redirect
+    // For now, we'll just switch to the promotions tab
+    setActiveTab("promotions");
+  };
 
   const handleRestrictedFeature = () => {
     toast({
@@ -301,7 +337,7 @@ export default function MarketingPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <AIRecommendationEngine />
+                    <AIRecommendationEngine onCreatePromotion={handleCreatePromotion} />
                   </CardContent>
                 </Card>
                 
