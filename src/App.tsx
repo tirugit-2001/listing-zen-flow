@@ -53,17 +53,7 @@ function App() {
                 <SellerCentralPage />
               </ProtectedRoute>
             } />
-            <Route path="/subscriptions" element={
-              <ProtectedRoute>
-                <SubscriptionPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/subscriptions/payment-methods" element={
-              <ProtectedRoute>
-                <SubscriptionPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/subscriptions/billing-history" element={
+            <Route path="/subscriptions/*" element={
               <ProtectedRoute>
                 <SubscriptionPage />
               </ProtectedRoute>
@@ -96,69 +86,57 @@ function App() {
               </OnboardingRequiredRoute>
             } />
             <Route path="/analytics" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <AnalyticsPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/proposals" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <ProposalsPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
-            <Route path="/return-gifts" element={
-              <ProtectedRoute>
-                <ReturnGiftsPage />
-              </ProtectedRoute>
+            <Route path="/return-gifts/*" element={
+              <OnboardingRequiredRoute>
+                <Routes>
+                  <Route path="/" element={<ReturnGiftsPage />} />
+                  <Route path="/:id" element={<ReturnGiftDetailPage />} />
+                  <Route path="/batch/:id" element={<ReturnGiftBatchPage />} />
+                </Routes>
+              </OnboardingRequiredRoute>
             } />
-            <Route path="/return-gifts/:id" element={
-              <ProtectedRoute>
-                <ReturnGiftDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/return-gifts/batch/:id" element={
-              <ProtectedRoute>
-                <ReturnGiftBatchPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/marketing" element={
-              <ProtectedRoute>
-                <MarketingPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/marketing/campaign/:id" element={
-              <ProtectedRoute>
-                <CampaignDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/marketing/audience" element={
-              <ProtectedRoute>
-                <AudienceSegmentsPage />
-              </ProtectedRoute>
+            <Route path="/marketing/*" element={
+              <OnboardingRequiredRoute>
+                <Routes>
+                  <Route path="/" element={<MarketingPage />} />
+                  <Route path="/campaign/:id" element={<CampaignDetailPage />} />
+                  <Route path="/audience" element={<AudienceSegmentsPage />} />
+                </Routes>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/offers-and-promotions" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <OffersAndPromotionsPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/tax-management" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <TaxManagementPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/distributor-authorization" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <DistributorAuthorizationPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/order-financing" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <OrderFinancingPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             <Route path="/sample-orders" element={
-              <ProtectedRoute>
+              <OnboardingRequiredRoute>
                 <SampleOrdersPage />
-              </ProtectedRoute>
+              </OnboardingRequiredRoute>
             } />
             
             {/* 404 route */}
