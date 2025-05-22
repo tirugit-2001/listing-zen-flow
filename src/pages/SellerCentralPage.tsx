@@ -328,6 +328,24 @@ export default function SellerCentralPage() {
                     <span>Branding</span>
                   </Button>
                 )}
+                
+                {onboardingStatus.isComplete ? (
+                  <Button asChild variant="outline" className="h-24 flex flex-col">
+                    <Link to="/hamper-management">
+                      <Package className="h-6 w-6 mb-1" />
+                      <span>Hampers</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex flex-col"
+                    onClick={handleRestrictedFeature}
+                  >
+                    <Package className="h-6 w-6 mb-1" />
+                    <span>Hampers</span>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

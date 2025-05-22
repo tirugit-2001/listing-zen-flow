@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import SellerCentralPage from "./pages/SellerCentralPage";
@@ -30,6 +29,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { PaymentProvider } from "./contexts/PaymentContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute"; 
 import OnboardingRequiredRoute from "./components/auth/OnboardingRequiredRoute";
+import HamperManagementPage from "./pages/HamperManagementPage";
+import CreateHamperPage from "./pages/CreateHamperPage";
 
 function App() {
   return (
@@ -137,6 +138,16 @@ function App() {
               <OnboardingRequiredRoute>
                 <SampleOrdersPage />
               </OnboardingRequiredRoute>
+            } />
+            <Route path="/hamper-management" element={
+              <ProtectedRoute>
+                <HamperManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/create-hamper" element={
+              <ProtectedRoute>
+                <CreateHamperPage />
+              </ProtectedRoute>
             } />
             
             {/* 404 route */}
