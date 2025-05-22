@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -517,8 +516,8 @@ function BrandingOptionsStep({ onNext }: { onNext: () => void }) {
                   <div className="font-medium">₹250/unit</div>
                 </div>
                 <div className="flex items-center space-x-2 border rounded-lg p-3">
-                  <RadioGroupItem value="luxury" id="luxury" />
-                  <label htmlFor="luxury" className="flex-1">
+                  <RadioGroupItem value="custom" id="custom" />
+                  <label htmlFor="custom" className="flex-1">
                     <div className="font-medium">Luxury Packaging</div>
                     <div className="text-sm text-muted-foreground">Handcrafted wooden box with custom engraving</div>
                   </label>
