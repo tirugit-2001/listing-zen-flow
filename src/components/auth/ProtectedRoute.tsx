@@ -14,9 +14,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Wait for auth state to load
   if (isLoading) {
     return (
-      <div className="container py-8 flex items-center justify-center">
+      <div className="container py-8 flex flex-col items-center justify-center">
         <Loader className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">Loading authentication...</p>
       </div>
     );
   }

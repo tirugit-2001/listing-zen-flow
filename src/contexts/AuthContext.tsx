@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +13,7 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
   resetSessionTimer: () => void;
-  isLoading: boolean; // Add the isLoading property
+  isLoading: boolean;
 }
 
 interface UserProfile {
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check local storage on initial load
     return localStorage.getItem("isAuthenticated") === "true";
   });
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Add isLoading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserProfile | null>(() => {
     // Load user from localStorage if available
     const savedUser = localStorage.getItem("user");
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Define logout function as a useCallback
+  // Define logout function as a useCallback to avoid recreation on every render
   const logout = useCallback(() => {
     setIsAuthenticated(false);
     setUser(null);
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     navigate("/login");
   }, [navigate, sessionTimer]);
 
-  // Define resetSessionTimer function as a useCallback
+  // Define resetSessionTimer function as a useCallback to avoid recreation on every render
   const resetSessionTimer = useCallback(() => {
     if (sessionTimer) clearTimeout(sessionTimer);
     
@@ -82,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, SESSION_TIMEOUT);
     
     setSessionTimer(newTimer);
-  }, [sessionTimer, toast, logout]);
+  }, [toast, logout]);
 
   // Simulate initial authentication check
   useEffect(() => {
@@ -94,17 +95,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle session timeout
+  // Handle session timeout - FIX: Adding proper dependencies
   useEffect(() => {
     if (isAuthenticated) {
       resetSessionTimer();
     }
+    
     return () => {
       if (sessionTimer) clearTimeout(sessionTimer);
     };
-  }, [isAuthenticated, resetSessionTimer, sessionTimer]);
+  }, [isAuthenticated, resetSessionTimer]);
 
-  // Add event listeners for user activity
+  // Add event listeners for user activity - FIX: Adding proper dependencies
   useEffect(() => {
     if (isAuthenticated) {
       const activityEvents = ["mousedown", "keydown", "touchstart", "scroll"];
@@ -123,7 +125,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [isAuthenticated, resetSessionTimer]);
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
-    // This would normally be an API call
     try {
       setIsLoading(true);
       // Simulate API call delay
@@ -191,7 +192,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     resetPassword,
     resetSessionTimer,
-    isLoading, // Add isLoading to the context value
+    isLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

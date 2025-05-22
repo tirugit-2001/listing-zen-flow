@@ -22,13 +22,14 @@ export const useOnboardingStatus = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchOnboardingStatus = async () => {
-      if (!user) {
-        setStatus(null);
-        setIsLoading(false);
-        return;
-      }
+    // Skip the effect if there's no user (prevents unnecessary API calls)
+    if (!user) {
+      setStatus(null);
+      setIsLoading(false);
+      return;
+    }
 
+    const fetchOnboardingStatus = async () => {
       try {
         setIsLoading(true);
         
@@ -83,6 +84,8 @@ export const useOnboardingStatus = () => {
     };
 
     fetchOnboardingStatus();
+    
+    // Only re-run this effect if the user changes or toast function changes
   }, [user, toast]);
 
   return {

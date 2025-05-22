@@ -27,10 +27,9 @@ export default function VendorOnboardingChecklist() {
     );
   }
   
-  const allComplete = requiredSteps.every(step => step.completed);
-  
-  if (allComplete) {
-    return null; // Don't show the checklist if all steps are complete
+  // Don't show the checklist if there are no steps or if all steps are complete
+  if (!requiredSteps || requiredSteps.length === 0 || requiredSteps.every(step => step.completed)) {
+    return null;
   }
 
   return (
