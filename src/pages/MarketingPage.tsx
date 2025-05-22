@@ -42,14 +42,15 @@ export default function MarketingPage() {
   const { toast } = useToast();
 
   // Updated promotions data to match PromotionCard props
+  // Changed products from string[] to string to match PromotionProps
   const promotions = [
     {
       id: "promo1",
       title: "Summer Sale",
-      name: "Summer Sale Campaign", // Added name property
+      name: "Summer Sale Campaign",
       type: "discount",
-      discount: "20%", // Added discount property
-      products: ["Product 1", "Product 2", "Product 3"], // Added products property
+      discount: "20%",
+      products: "3 products", // Changed from array to string to match PromotionProps
       status: "active",
       startDate: "2025-05-15",
       endDate: "2025-06-15",
@@ -60,10 +61,10 @@ export default function MarketingPage() {
     {
       id: "promo2",
       title: "New Collection Launch",
-      name: "Spring Collection Launch", // Added name property
+      name: "Spring Collection Launch",
       type: "featured",
-      discount: "", // Empty discount for featured type
-      products: ["New Product 1", "New Product 2"], // Added products property
+      discount: "",
+      products: "2 products", // Changed from array to string to match PromotionProps
       status: "scheduled",
       startDate: "2025-05-25",
       endDate: "2025-06-10",
@@ -74,10 +75,10 @@ export default function MarketingPage() {
     {
       id: "promo3",
       title: "Clearance Sale",
-      name: "End of Season Clearance", // Added name property
+      name: "End of Season Clearance",
       type: "discount",
-      discount: "50%", // Added discount property
-      products: ["Old Product 1", "Old Product 2", "Old Product 3", "Old Product 4"], // Added products property
+      discount: "50%",
+      products: "4 products", // Changed from array to string to match PromotionProps
       status: "draft",
       startDate: "",
       endDate: "",
