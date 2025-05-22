@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export interface BankData {
   accountName: string;
@@ -29,8 +31,19 @@ export interface BankDetailsFormProps {
   onUpdate: (data: BankData) => void;
 }
 
+// Create schema for bank details validation
+const bankDetailsSchema = z.object({
+  accountName: z.string().min(1, "Account name is required"),
+  accountNumber: z.string().min(1, "Account number is required"),
+  ifscCode: z.string().min(1, "IFSC code is required"),
+  bankName: z.string().min(1, "Bank name is required"),
+  bankBranch: z.string().optional(),
+  accountType: z.string().min(1, "Account type is required")
+});
+
 export default function BankDetailsForm({ data, onUpdate }: BankDetailsFormProps) {
-  const form = useForm({
+  const form = useForm<BankData>({
+    resolver: zodResolver(bankDetailsSchema),
     defaultValues: {
       accountName: data.accountName || "",
       accountNumber: data.accountNumber || "",
