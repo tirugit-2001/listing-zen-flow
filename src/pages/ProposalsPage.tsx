@@ -2,17 +2,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   FileText, Plus, Filter, Download, Search, 
-  ArrowUpDown, Calendar, Users
+  ArrowUpDown, Calendar, Users, PlusCircle,
+  ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProposalsList from "@/components/proposals/ProposalsList";
 import { Proposal, ProposalStatus } from "@/lib/models/proposal";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
 // Mock data for proposals
 const mockProposals: Proposal[] = [
@@ -269,6 +271,20 @@ export default function ProposalsPage() {
   return (
     <Layout>
       <div className="container py-6">
+        <div className="mb-6">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink onClick={() => navigate("/seller-central")}>Seller Central</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink>Proposals</BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center">
@@ -330,15 +346,15 @@ export default function ProposalsPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden hover-scale cursor-pointer" onClick={handleCreateProposal}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Create New</CardTitle>
+              <PlusCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-lg font-medium">New Proposal</div>
               <p className="text-xs text-muted-foreground">
-                +3 from last month
+                Click to create a new proposal
               </p>
             </CardContent>
           </Card>
@@ -389,13 +405,27 @@ export default function ProposalsPage() {
           
           <TabsContent value="all">
             <Card>
-              <CardHeader>
-                <CardTitle>All Proposals</CardTitle>
-                <CardDescription>View all client proposals</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>All Proposals</CardTitle>
+                  <CardDescription>View all client proposals</CardDescription>
+                </div>
+                <Button size="sm" onClick={handleCreateProposal}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Proposal
+                </Button>
               </CardHeader>
               <CardContent>
                 <ProposalsList proposals={mockProposals} />
               </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline" size="sm" disabled>
+                  Previous
+                </Button>
+                <Button variant="outline" size="sm">
+                  Next
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
           
@@ -403,9 +433,15 @@ export default function ProposalsPage() {
           {["draft", "sent", "approved", "rejected"].map((status) => (
             <TabsContent key={status} value={status}>
               <Card>
-                <CardHeader>
-                  <CardTitle>{proposalStatuses.find(s => s.value === status)?.label}</CardTitle>
-                  <CardDescription>Proposals with status: {status}</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>{proposalStatuses.find(s => s.value === status)?.label}</CardTitle>
+                    <CardDescription>Proposals with status: {status}</CardDescription>
+                  </div>
+                  <Button size="sm" onClick={handleCreateProposal}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Proposal
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <ProposalsList 
@@ -413,10 +449,63 @@ export default function ProposalsPage() {
                     filterStatus={status as ProposalStatus} 
                   />
                 </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Next
+                  </Button>
+                </CardFooter>
               </Card>
             </TabsContent>
           ))}
         </Tabs>
+
+        <div className="mt-6">
+          <Card className="bg-muted/50">
+            <CardHeader>
+              <CardTitle className="text-lg">AI Proposal Recommendations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">Client Win-back Opportunity</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          TechCorp hasn't ordered in 3 months. AI suggests a personalized welcome back proposal.
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" className="mt-1">
+                        <PlusCircle className="h-4 w-4 mr-1" />
+                        Create
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">Seasonal Promotion</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Create a Diwali gift proposal for your top 5 clients with seasonal discounts.
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" className="mt-1">
+                        <PlusCircle className="h-4 w-4 mr-1" />
+                        Create
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

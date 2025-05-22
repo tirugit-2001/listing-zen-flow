@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import SellerCentralPage from "./pages/SellerCentralPage";
@@ -8,6 +9,7 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProposalsPage from "./pages/ProposalsPage";
+import CreateProposalPage from "./pages/CreateProposalPage";
 import ReturnGiftsPage from "./pages/ReturnGiftsPage";
 import ReturnGiftDetailPage from "./pages/ReturnGiftDetailPage";
 import ReturnGiftBatchPage from "./pages/ReturnGiftBatchPage";
@@ -38,8 +40,9 @@ function App() {
       <AuthProvider>
         <PaymentProvider>
           <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
+            {/* Public routes - Redirect to seller central if authenticated */}
+            <Route path="/" element={<Navigate to="/seller-central" replace />} />
+            <Route path="/home" element={<Index />} />
             <Route path="/login" element={<SignInPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             
@@ -94,6 +97,11 @@ function App() {
             <Route path="/proposals" element={
               <OnboardingRequiredRoute>
                 <ProposalsPage />
+              </OnboardingRequiredRoute>
+            } />
+            <Route path="/proposals/new" element={
+              <OnboardingRequiredRoute>
+                <CreateProposalPage />
               </OnboardingRequiredRoute>
             } />
             <Route path="/return-gifts/*" element={
