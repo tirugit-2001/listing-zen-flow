@@ -187,7 +187,7 @@ const mockProposals: Proposal[] = [
       unitPrice: 7700,
       totalPrice: 92400
     }),
-    packaging: { type: "luxury", description: "Luxury custom box", cost: 12000 },
+    packaging: { type: "custom", description: "Luxury custom box", cost: 12000 },
     terms: { 
       paymentTerms: "Full advance", 
       deliveryTerms: "2 weeks", 
