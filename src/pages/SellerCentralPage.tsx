@@ -24,13 +24,30 @@ import {
   BadgeDollarSign,
   Building2,
   Link as LinkIcon,
-  CreditCard
+  CreditCard,
+  ShieldCheck,
+  FileCheck,
+  AlertTriangle
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SellerCentralPage() {
   const [platformMode, setPlatformMode] = useState<"wyshkit" | "basecamp">("wyshkit");
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+
+  // Mock data for onboarding status
+  const onboardingStatus = {
+    isComplete: false,
+    progress: 60,
+    verificationComplete: true,
+    kycComplete: true,
+    subscriptionComplete: false,
+    businessProfileComplete: true,
+    paymentMethodsComplete: false
+  };
 
   // Mock data for charts
   const performance = {
@@ -40,6 +57,14 @@ export default function SellerCentralPage() {
     returnGiftOrders: 3,
     inventory: 42,
     sampleOrders: 3
+  };
+
+  const handleRestrictedFeature = () => {
+    toast({
+      title: "Complete Onboarding",
+      description: "Please complete your onboarding process to access this feature.",
+      variant: "destructive"
+    });
   };
 
   return (
@@ -71,6 +96,92 @@ export default function SellerCentralPage() {
             </TabsList>
           </Tabs>
         </div>
+
+        {/* Onboarding Alert - Show when onboarding is incomplete */}
+        {!onboardingStatus.isComplete && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <CardTitle>Complete Your Onboarding</CardTitle>
+              </div>
+              <CardDescription>
+                Please complete your onboarding to access all platform features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm font-medium">
+                  <span>Onboarding Progress</span>
+                  <span>{onboardingStatus.progress}%</span>
+                </div>
+                <Progress value={onboardingStatus.progress} />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+                  <div className={`p-3 border rounded-md ${onboardingStatus.verificationComplete ? "bg-green-50 border-green-100" : "bg-white"}`}>
+                    <div className="flex items-center gap-2">
+                      {onboardingStatus.verificationComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">Verification</span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 border rounded-md ${onboardingStatus.kycComplete ? "bg-green-50 border-green-100" : "bg-white"}`}>
+                    <div className="flex items-center gap-2">
+                      {onboardingStatus.kycComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <FileCheck className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">KYC Documents</span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 border rounded-md ${onboardingStatus.businessProfileComplete ? "bg-green-50 border-green-100" : "bg-white"}`}>
+                    <div className="flex items-center gap-2">
+                      {onboardingStatus.businessProfileComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">Business Profile</span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 border rounded-md ${onboardingStatus.subscriptionComplete ? "bg-green-50 border-green-100" : "bg-white"}`}>
+                    <div className="flex items-center gap-2">
+                      {onboardingStatus.subscriptionComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">Subscription</span>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 border rounded-md ${onboardingStatus.paymentMethodsComplete ? "bg-green-50 border-green-100" : "bg-white"}`}>
+                    <div className="flex items-center gap-2">
+                      {onboardingStatus.paymentMethodsComplete ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm font-medium">Payment Methods</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button asChild>
+                <Link to="/vendor-onboarding">Continue Onboarding</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
 
         {/* Performance Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -143,12 +254,23 @@ export default function SellerCentralPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/add-product">
+                {onboardingStatus.isComplete ? (
+                  <Button asChild variant="outline" className="h-24 flex flex-col">
+                    <Link to="/add-product">
+                      <Package className="h-6 w-6 mb-1" />
+                      <span>Add Product</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex flex-col"
+                    onClick={handleRestrictedFeature}
+                  >
                     <Package className="h-6 w-6 mb-1" />
                     <span>Add Product</span>
-                  </Link>
-                </Button>
+                  </Button>
+                )}
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
                   <Link to="/orders">
@@ -164,26 +286,48 @@ export default function SellerCentralPage() {
                   </Link>
                 </Button>
                 
-                <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/products">
+                {onboardingStatus.isComplete ? (
+                  <Button asChild variant="outline" className="h-24 flex flex-col">
+                    <Link to="/products">
+                      <Boxes className="h-6 w-6 mb-1" />
+                      <span>Products ({performance.inventory})</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex flex-col"
+                    onClick={handleRestrictedFeature}
+                  >
                     <Boxes className="h-6 w-6 mb-1" />
                     <span>Products ({performance.inventory})</span>
-                  </Link>
-                </Button>
+                  </Button>
+                )}
                 
                 <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/order-financing">
+                  <Link to="/subscriptions">
                     <CreditCard className="h-6 w-6 mb-1" />
-                    <span>Financing</span>
+                    <span>Subscriptions</span>
                   </Link>
                 </Button>
                 
-                <Button asChild variant="outline" className="h-24 flex flex-col">
-                  <Link to="/branding-canvas">
+                {onboardingStatus.isComplete ? (
+                  <Button asChild variant="outline" className="h-24 flex flex-col">
+                    <Link to="/branding-canvas">
+                      <FileText className="h-6 w-6 mb-1" />
+                      <span>Branding</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex flex-col"
+                    onClick={handleRestrictedFeature}
+                  >
                     <FileText className="h-6 w-6 mb-1" />
                     <span>Branding</span>
-                  </Link>
-                </Button>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -337,46 +481,27 @@ export default function SellerCentralPage() {
           </Card>
         </div>
         
-        {/* New Features Section */}
+        {/* Services Section - Replace New Features */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>New Features</CardTitle>
-            <CardDescription>Explore the latest additions to BaseCampMart</CardDescription>
+            <CardTitle>Available Services</CardTitle>
+            <CardDescription>Subscribe to these services to enhance your product listings</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
-                    <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full mb-3">
+                    <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
                       <BadgePercent className="h-5 w-5" />
                     </div>
-                    <h3 className="text-sm font-medium mb-2">Offers & Promotions</h3>
+                    <h3 className="text-sm font-medium mb-2">Product Photography</h3>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Create and manage discounts, coupons and flash sales
+                      Professional product photography with AI-powered editing
                     </p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/offers-and-promotions">
-                        Explore
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-3">
-                      <PackageIcon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-sm font-medium mb-2">Sample Orders</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Request product samples before placing bulk orders
-                    </p>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to="/sample-orders">
-                        Explore
+                      <Link to="/subscriptions">
+                        Subscribe
                       </Link>
                     </Button>
                   </div>
@@ -387,6 +512,25 @@ export default function SellerCentralPage() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="bg-amber-100 text-amber-600 p-2 rounded-full mb-3">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-sm font-medium mb-2">Product Promotion</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Feature your products in BaseCampMart marketplace
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/marketing">
+                        Explore
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full mb-3">
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <h3 className="text-sm font-medium mb-2">Order Financing</h3>
@@ -408,9 +552,9 @@ export default function SellerCentralPage() {
                     <div className="bg-purple-100 text-purple-600 p-2 rounded-full mb-3">
                       <LinkIcon className="h-5 w-5" />
                     </div>
-                    <h3 className="text-sm font-medium mb-2">Distributor Authorization</h3>
+                    <h3 className="text-sm font-medium mb-2">Cross-Listing</h3>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Manage brands and product cross-listing permissions
+                      List your products across multiple platforms
                     </p>
                     <Button asChild variant="outline" size="sm">
                       <Link to="/distributor-authorization">

@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import SellerCentralPage from "./pages/SellerCentralPage";
 import Products from "./pages/Products";
@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PaymentProvider } from "./contexts/PaymentContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute"; 
+import OnboardingRequiredRoute from "./components/auth/OnboardingRequiredRoute";
 
 function App() {
   return (
@@ -39,31 +41,125 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<SignInPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/vendor-onboarding" element={<VendorOnboardingPage />} />
             
-            {/* Protected routes (should eventually be protected by authentication) */}
-            <Route path="/seller-central" element={<SellerCentralPage />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/add-product" element={<AddProductPage />} />
-            <Route path="/branding-canvas" element={<BrandingCanvasPage />} />
-            <Route path="/account-settings" element={<AccountSettingsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/proposals" element={<ProposalsPage />} />
-            <Route path="/return-gifts" element={<ReturnGiftsPage />} />
-            <Route path="/return-gifts/:id" element={<ReturnGiftDetailPage />} />
-            <Route path="/return-gifts/batch/:id" element={<ReturnGiftBatchPage />} />
-            <Route path="/marketing" element={<MarketingPage />} />
-            <Route path="/marketing/campaign/:id" element={<CampaignDetailPage />} />
-            <Route path="/marketing/audience" element={<AudienceSegmentsPage />} />
-            <Route path="/offers-and-promotions" element={<OffersAndPromotionsPage />} />
-            <Route path="/tax-management" element={<TaxManagementPage />} />
-            <Route path="/distributor-authorization" element={<DistributorAuthorizationPage />} />
-            <Route path="/order-financing" element={<OrderFinancingPage />} />
-            <Route path="/sample-orders" element={<SampleOrdersPage />} />
-            <Route path="/subscriptions" element={<SubscriptionPage />} />
-            <Route path="/subscriptions/payment-methods" element={<SubscriptionPage />} />
-            <Route path="/subscriptions/billing-history" element={<SubscriptionPage />} />
+            {/* Authenticated routes that don't require completed onboarding */}
+            <Route path="/vendor-onboarding" element={
+              <ProtectedRoute>
+                <VendorOnboardingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/seller-central" element={
+              <ProtectedRoute>
+                <SellerCentralPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/subscriptions" element={
+              <ProtectedRoute>
+                <SubscriptionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/subscriptions/payment-methods" element={
+              <ProtectedRoute>
+                <SubscriptionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/subscriptions/billing-history" element={
+              <ProtectedRoute>
+                <SubscriptionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/account-settings" element={
+              <ProtectedRoute>
+                <AccountSettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/orders" element={
+              <ProtectedRoute>
+                <OrdersPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Protected routes that require completed onboarding */}
+            <Route path="/products" element={
+              <OnboardingRequiredRoute>
+                <Products />
+              </OnboardingRequiredRoute>
+            } />
+            <Route path="/add-product" element={
+              <OnboardingRequiredRoute>
+                <AddProductPage />
+              </OnboardingRequiredRoute>
+            } />
+            <Route path="/branding-canvas" element={
+              <OnboardingRequiredRoute>
+                <BrandingCanvasPage />
+              </OnboardingRequiredRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/proposals" element={
+              <ProtectedRoute>
+                <ProposalsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/return-gifts" element={
+              <ProtectedRoute>
+                <ReturnGiftsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/return-gifts/:id" element={
+              <ProtectedRoute>
+                <ReturnGiftDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/return-gifts/batch/:id" element={
+              <ProtectedRoute>
+                <ReturnGiftBatchPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/marketing" element={
+              <ProtectedRoute>
+                <MarketingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/marketing/campaign/:id" element={
+              <ProtectedRoute>
+                <CampaignDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/marketing/audience" element={
+              <ProtectedRoute>
+                <AudienceSegmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/offers-and-promotions" element={
+              <ProtectedRoute>
+                <OffersAndPromotionsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/tax-management" element={
+              <ProtectedRoute>
+                <TaxManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/distributor-authorization" element={
+              <ProtectedRoute>
+                <DistributorAuthorizationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/order-financing" element={
+              <ProtectedRoute>
+                <OrderFinancingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/sample-orders" element={
+              <ProtectedRoute>
+                <SampleOrdersPage />
+              </ProtectedRoute>
+            } />
             
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />
