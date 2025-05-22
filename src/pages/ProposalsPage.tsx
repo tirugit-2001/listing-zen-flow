@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -275,11 +274,13 @@ export default function ProposalsPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink onClick={() => navigate("/seller-central")}>Seller Central</BreadcrumbLink>
+                <BreadcrumbLink to="/seller-central" onClick={() => navigate("/seller-central")}>
+                  Seller Central
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink>Proposals</BreadcrumbLink>
+                <BreadcrumbLink to="#">Proposals</BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

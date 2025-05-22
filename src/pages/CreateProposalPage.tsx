@@ -16,15 +16,19 @@ export default function CreateProposalPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink onClick={() => navigate("/seller-central")}>Seller Central</BreadcrumbLink>
+                <BreadcrumbLink to="/seller-central" onClick={() => navigate("/seller-central")}>
+                  Seller Central
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink onClick={() => navigate("/proposals")}>Proposals</BreadcrumbLink>
+                <BreadcrumbLink to="/proposals" onClick={() => navigate("/proposals")}>
+                  Proposals
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink>Create New Proposal</BreadcrumbLink>
+                <BreadcrumbLink to="#">Create New Proposal</BreadcrumbLink>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
