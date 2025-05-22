@@ -43,6 +43,7 @@ export default function MarketingPage() {
 
   // Updated promotions data to match PromotionCard props
   // Changed products from string[] to string to match PromotionProps
+  // And updated performance from number to Performance object
   const promotions = [
     {
       id: "promo1",
@@ -56,7 +57,12 @@ export default function MarketingPage() {
       endDate: "2025-06-15",
       budget: 15000,
       spent: 4200,
-      performance: 86
+      performance: {
+        impressions: 8500,
+        clicks: 1200,
+        conversions: 320,
+        revenue: "₹48,600"
+      }
     },
     {
       id: "promo2",
@@ -70,7 +76,12 @@ export default function MarketingPage() {
       endDate: "2025-06-10",
       budget: 25000,
       spent: 0,
-      performance: 0
+      performance: {
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        revenue: "₹0"
+      }
     },
     {
       id: "promo3",
@@ -84,7 +95,12 @@ export default function MarketingPage() {
       endDate: "",
       budget: 10000,
       spent: 0,
-      performance: 0
+      performance: {
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        revenue: "₹0"
+      }
     }
   ];
 
