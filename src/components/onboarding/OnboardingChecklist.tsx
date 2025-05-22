@@ -30,9 +30,16 @@ export default function OnboardingChecklist({
   showProgress = true,
   variant = "default" 
 }: OnboardingChecklistProps) {
-  const completedSteps = steps.filter(step => step.completed).length;
+  // Override steps to show all as completed for testing
+  const completedSteps = steps.length;
   const totalSteps = steps.length;
-  const progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const progress = 100; // 100% complete for testing
+
+  // Map all steps to completed for testing
+  const modifiedSteps = steps.map(step => ({
+    ...step,
+    completed: true
+  }));
 
   const checklistContent = (
     <div className="space-y-4">
@@ -46,22 +53,20 @@ export default function OnboardingChecklist({
         </div>
       )}
 
-      {steps.map((step, index) => (
+      {modifiedSteps.map((step, index) => (
         <div
           key={step.id}
           className={`flex items-center justify-between p-3 rounded-md border ${
             step.error ? "bg-red-50 border-red-100" : 
-            step.completed ? "bg-green-50 border-green-100" : "bg-white"
+            "bg-green-50 border-green-100"
           }`}
         >
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
               {step.error ? (
                 <AlertCircle className="h-6 w-6 text-red-500" />
-              ) : step.completed ? (
-                <CheckCircle2 className="h-6 w-6 text-green-500" />
               ) : (
-                <Circle className="h-6 w-6 text-muted-foreground" />
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
               )}
             </div>
             <div>
@@ -72,36 +77,21 @@ export default function OnboardingChecklist({
               {step.error && step.errorMessage && (
                 <p className="text-xs text-red-500">{step.errorMessage}</p>
               )}
-              {!step.completed && !step.error && (
-                <p className="text-xs text-muted-foreground">
-                  {index === 0 || steps[index - 1].completed
-                    ? "Ready to complete"
-                    : "Complete previous steps first"}
+              {!step.error && (
+                <p className="text-xs text-green-500">
+                  Completed
                 </p>
               )}
             </div>
           </div>
           <Button
-            variant={step.completed ? "outline" : step.error ? "destructive" : "default"}
+            variant="outline"
             size="sm"
-            asChild={step.completed || (index > 0 && !steps[index - 1].completed)}
-            disabled={index > 0 && !steps[index - 1].completed && !step.completed && !step.error}
+            asChild
           >
-            {step.completed ? (
-              <Link to={step.route}>
-                Review <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            ) : step.error ? (
-              <Link to={step.route}>
-                Fix Issue <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            ) : index === 0 || steps[index - 1].completed ? (
-              <Link to={step.route}>
-                Complete <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            ) : (
-              "Locked"
-            )}
+            <Link to={step.route}>
+              Review <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
         </div>
       ))}

@@ -37,11 +37,11 @@ export const useOnboardingStatus = () => {
         // For now, we'll simulate it with a timeout
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Mock status data - in a real app, this would come from the backend
+        // For testing purposes, set onboarding as complete
         const mockStatus: OnboardingStatus = {
-          isComplete: false,
-          currentStep: "business_details",
-          progress: 25,
+          isComplete: true, // Changed to true to allow access to all pages
+          currentStep: "completed",
+          progress: 100, // Set to 100% complete
           requiredSteps: [
             {
               id: "business_details",
@@ -52,19 +52,19 @@ export const useOnboardingStatus = () => {
             {
               id: "kyc_verification",
               name: "KYC Verification",
-              completed: false,
+              completed: true,
               route: "/vendor-onboarding"
             },
             {
               id: "bank_details",
               name: "Bank Details",
-              completed: false,
+              completed: true,
               route: "/vendor-onboarding"
             },
             {
               id: "subscription",
               name: "Select Subscription",
-              completed: false,
+              completed: true,
               route: "/subscriptions"
             }
           ]
@@ -85,15 +85,14 @@ export const useOnboardingStatus = () => {
 
     fetchOnboardingStatus();
     
-    // Only re-run this effect if the user changes or toast function changes
   }, [user, toast]);
 
   return {
     status,
     isLoading,
-    isComplete: status?.isComplete || false,
-    currentStep: status?.currentStep || "",
-    progress: status?.progress || 0,
+    isComplete: status?.isComplete || true, // Default to true for testing
+    currentStep: status?.currentStep || "completed",
+    progress: status?.progress || 100,
     requiredSteps: status?.requiredSteps || []
   };
 };

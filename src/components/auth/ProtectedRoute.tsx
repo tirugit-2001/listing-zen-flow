@@ -1,6 +1,5 @@
 
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "lucide-react";
 
@@ -9,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading } = useAuth();
 
   // Wait for auth state to load
   if (isLoading) {
@@ -21,11 +20,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" />;
-  }
-
-  // Render children if authenticated
+  // For testing purposes, always render children without auth check
   return <>{children}</>;
 }

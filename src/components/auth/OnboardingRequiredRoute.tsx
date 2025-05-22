@@ -1,6 +1,5 @@
 
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { Loader } from "lucide-react";
@@ -10,8 +9,8 @@ interface OnboardingRequiredRouteProps {
 }
 
 export default function OnboardingRequiredRoute({ children }: OnboardingRequiredRouteProps) {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const { isLoading: statusLoading, isComplete, currentStep } = useOnboardingStatus();
+  const { isLoading: authLoading } = useAuth();
+  const { isLoading: statusLoading } = useOnboardingStatus();
   
   // Show loading state while checking authentication or onboarding status
   if (authLoading || statusLoading) {
@@ -23,23 +22,6 @@ export default function OnboardingRequiredRoute({ children }: OnboardingRequired
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" />;
-  }
-
-  // Redirect to onboarding if not complete
-  if (!isComplete) {
-    // Determine the right route based on current step
-    let targetRoute = "/vendor-onboarding";
-    
-    if (currentStep === "subscription") {
-      targetRoute = "/subscriptions";
-    }
-    
-    return <Navigate to={targetRoute} />;
-  }
-
-  // Render children if authenticated and onboarding complete
+  // For testing purposes, always allow access to all pages
   return <>{children}</>;
 }
